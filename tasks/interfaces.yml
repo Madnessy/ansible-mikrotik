@@ -1,0 +1,52 @@
+- name: disable interfaces
+  routeros_command:
+    commands:
+      - "/interface set {{ item }} disabled=yes"
+  with_items:
+    - "{{ disabled_interfaces }}"
+  when:
+    - disabled_interfaces is defined
+    - disabled_interfaces is iterable
+
+- name: remove interfaces which will become bonds from bridge
+  routeros_command:
+    commands:
+      - "/interface bridge port remove number=[ find interface={{ item }} ] "
+  with_items:
+    - "{{ interface_bond_slaves }}"
+  when:
+    - 'interface_bond_slaves is defined'
+
+- name: create 802.3ad bonds
+  routeros_command:
+    commands:
+      - "/interface bonding add mode={{ item.value.mode }} name={{ item.key }} slaves={{ item.value.interfaces }}"
+      - "/interface bridge port add bridge=bridge interface={{ item.key }}"
+  with_dict: "{{ interface_bonds }}"
+  when:
+    - 'interface_bonds is defined'
+    - ' item.value.mode  == "802.3ad"'
+
+- name: create balance-xor bonds
+  routeros_command:
+    commands:
+      - "/interface bonding add link-monitoring={{item.value.monitoring_mode| default ('mii')}} mode={{ item.value.mode }} name={{ item.key }} slaves={{ item.value.interfaces }}"
+      - "/interface bridge port add bridge=bridge interface={{ item.key }}"
+  with_dict: "{{ interface_bonds }}"
+  when:
+    - 'interface_bonds is defined'
+    - ' item.value.mode  == "balance-xor"'
+
+- name: create interfaces lists
+  routeros_command:
+    commands: "/interface list add name={{ item.name }} comment=\"{{ item.comment }}\""
+  with_items: "{{ interface_lists }}"
+  when: interface_lists is defined
+
+- name: add interface to interface lists
+  routeros_command:
+    commands: "/interface list member add interface={{ item.1 }} list={{ item.0.name }}"
+  with_subelements:
+    - "{{ interface_lists }}"
+    - interfaces
+  when: interface_lists is defined

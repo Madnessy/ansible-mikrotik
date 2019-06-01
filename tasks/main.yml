@@ -1,0 +1,17 @@
+- include: system.yml
+- include: interfaces.yml
+- include: wireless.yml
+  when: manage_wireless_interface
+- include: vlan.yml
+- include: hardening.yml
+#- include: vpn.yml
+#  when: manage_vpn
+- include: firewall_addressess.yml
+  when: manage_firewall
+# Manage the firewall policies
+- name: Create the policies
+  include_tasks: manage_firewall_policy.yml
+  with_list: "{{ firewall_policies | dictsort }}"
+  loop_control:
+    loop_var: firewall_policies_item
+  when: manage_firewall

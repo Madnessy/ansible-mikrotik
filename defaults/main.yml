@@ -1,0 +1,441 @@
+---
+ansible_network_os: routeros
+# switches to enable or disable wireless / firewall
+manage_firewall: true
+magage_wireless_interface: true
+manage_vpn: true
+
+# hardening settings
+# based on mikrotik advice
+# for more info : https://wiki.mikrotik.com/wiki/Manual:Securing_Your_Router
+disabled_services:
+  - telnet
+  - api
+  - api-ssl
+  - winbox
+  - ftp
+enabled_services:
+  - ssh
+  - www
+disabled_packages:
+  - ipv6
+management_subnet: 192.168.88.0/24
+disabled_tools_mac_winbox: true
+disabled_tools_mac_ping: true
+disable_mac_telnet: true
+disable_bandwith_server: true
+disable_neighbor_discovery: true
+disable_packages:
+  - ipv6
+disable_caching_proxy: true
+disable_socks_proxy: true
+disable_upnp: true
+disable_cloud: true
+ssh_strong_crypto: true
+disable_dns_cache: true
+disable_lcd: true
+set_system_logging_remote: true
+system_logging_remote_ip: 192.168.88.101
+system_logging_remote_ip_port: 514
+set_system_logging: true
+system_logging:
+  - action: remote
+    topics:
+    - name: account
+    - name: critical
+    - name: dhcp
+    - name: firewall
+    - name: health
+    - name: info
+    - name: iscsi
+    - name: manager
+    - name: ntp
+    - name: packet
+    - name: read
+    - name: ssh
+    - name: store
+    - name: ddns
+    - name: dns
+    - name: error
+    - name: interface
+    - name: l2tp
+    - name: script
+    - name: warning
+    - name: wireless
+    - name: backup
+    - name: event
+    - name: bridge
+    - name: ipsec
+    - name: ovpn
+    - name: route
+    - name: state
+    - name: system
+    - name: write
+# disabled_interfaces:
+#  - ether4
+firewall_vlan_enable: true
+backup_password: backup
+backup_src_ip: 192.168.88.1
+backup_script: true
+upgrade_script: true
+set_ntp_client_ip: false
+ntp_client_ip1:
+ntp_client_ip2:
+set_ntp_client_dns: true
+ntp_client_dnsnames: 0.nl.pool.ntp.org,1.nl.pool.ntp.org
+
+# firewall settings
+firewall_address:
+  - list: not_in_internet
+    entrys:
+    - address: 0.0.0.0/8
+      comment: Self-Identification [RFC 3330]
+      disabled: "no"
+    - address: 10.0.0.0/8
+      comment: "Self-Identification [RFC 3330]"
+      disabled: "no"
+    - address: 100.64.0.0/10
+      comment: "RFC6890"
+      disabled: "no"
+    - address: 127.0.0.0/8
+      comment: "Loopback [RFC 3330]"
+      disabled: "no"
+    - address: 169.254.0.0/16
+      comment: "Link Local [RFC 3330]"
+      disabled: "no"
+    - address: 172.16.0.0/12
+      comment: "Private[RFC 1918] - CLASS B"
+      disabled: "no"
+    - address: 192.0.0.0/24
+      comment: "Reserved - IANA - TestNet1"
+      disabled: "no"
+    - address: 192.0.2.0/24
+      comment: "Reserved - IANA - TestNet1"
+      disabled: "no"
+    - address: 192.88.99.0/24
+      comment: "6to4 Relay Anycast [RFC 3068]"
+      disabled: "no"
+    - address: 192.168.0.0/24
+      comment: "Private[RFC 1918]-CLASS-C"
+      disabled: "no"
+    - address: 198.18.0.0/15
+      comment: "NIDB Testing"
+      disabled: "no"
+    - address: 198.51.100.0/24
+      comment: "Reserved - IANA - TestNet2"
+      disabled: "no"
+    - address: 203.0.113.0/24
+      comment: "Reserved - IANA - TestNet3"
+      disabled: "no"
+    - address: 224.0.0.0/4
+      comment: "MC Class D IANA"
+      disabled: "no"
+    - address: 240.0.0.0/4
+      comment: "RFC6890"
+      disabled: "no"
+  - list: adminaccess
+    entrys:
+    - address: 192.168.88.0/24
+      comment: "Allow lan to admin interface"
+      disabled: "no"
+
+# Used these names so we can add the policies in order
+firewall_policies:
+  aaaa:
+    operation: add
+    action: fasttrack-connection
+    chain: forward
+    comment: FastTrack
+    connection_state: established,related
+  baaa:
+    operation: add
+    action: accept
+    chain: forward
+    comment: "Established, Related"
+    connection_state: established,related
+  caaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop invalid"
+    connection_state: invalid
+    log: "yes"
+    log_prefix: invalid
+  daaa:
+    operation: add
+    action: log
+  # action: drop
+    chain: forward
+    comment: "Drop tries to reach not public addresses from LAN"
+    dst_address_list: not_in_internet
+    in_interface: bridge1
+    log: "yes"
+    log_prefix: "!public_from_LAN"
+    out_interface: "!bridge1"
+  eaaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop incoming packets that are not NATted"
+    connection_nat_state: "!dstnat"
+    connection_state: new
+    in_interface: ether1
+    log: "yes"
+    log_prefix: "!NAT"
+  faaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop incoming from internet which is not public IP"
+    in_interface: ether1
+    log: "yes"
+    log_prefix: "!public"
+    src_address_list: not_in_internet
+  gaaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop packets from LAN that do not have LAN IP"
+    in_interface: bridge1
+    log: "yes"
+    log_prefix: LAN_!LAN
+    src_address: "!192.168.150.0/24"
+  haaa:
+    operation: add
+    action: accept
+    chain: input
+    comment: "Accept established,related"
+    connection_state: established,related
+  iaaa:
+    operation: add
+    action: log
+   # action: drop
+    chain: input
+    comment: "Drop invalid"
+    connection_state: invalid
+  jaaa:
+    operation: add
+    action: log
+   # action: drop
+    chain: input
+    comment: "Drop all not coming from LAN"
+    in_interface_list: "!LAN"
+  kaaa:
+    operation: add
+    action: accept
+    chain: input
+    comment: "Accept ICMP"
+    protocol: icmp
+  laaa:
+    operation: add
+    action: accept
+    chain: input
+    comment: "Allow ADMIN to Router"
+    in_interface_list: LAN
+    src_address_list: adminaccess
+  maaa:
+    operation: add
+    action: accept
+    chain: input
+    comment: "Allow LAN DNS queries_UDP"
+    dst_port: 53
+    in_interface_list: LAN
+    protocol: udp
+  naaa:
+    operation: add
+    action: accept
+    chain: input
+    comment: "Allow LAN DNS queries TCP"
+    dst_port: 53
+    in_interface_list: LAN
+    protocol: tcp
+  oaaa:
+    operation: add
+    action: drop
+    chain: input
+    comment: "Deny WAN DNS queries UDP"
+    dst_port: 53
+    in_interface_list: WAN
+    log: "yes"
+    protocol: udp
+  paaa:
+    operation: add
+    action: drop
+    chain: input
+    comment: "Deny WAN DNS queries_TCP"
+    dst_port: 53
+    in_interface_list: WAN
+    protocol: tcp
+  saaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop invalid"
+    connection_state: invalid
+  taaa:
+    operation: add
+    action: drop
+    chain: forward
+    comment: "Drop all from WAN not DSTNATed"
+    connection_nat_state: "!dstnat"
+    connection_state: new
+    in_interface_list: WAN
+  uaaa:
+    operation: add
+    chain: input
+    protocol: tcp
+    psd: 21,3s,3,1
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "Port scanners to list "
+    disabled: "no"
+  uaab:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: fin,!syn,!rst,!psh,!ack,!urg
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "NMAP FIN Stealth scan"
+  uaac:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: fin,syn
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "SYN/FIN scan"
+  uaad:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: syn,rst
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "SYN/RST scan"
+  uaae:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: fin,psh,urg,!syn,!rst,!ack
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "FIN/PSH/URG scan"
+  uaaf:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: fin,syn,rst,psh,ack,urg
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "ALL/ALL scan"
+  uaag:
+    operation: add
+    chain: input
+    protocol: tcp
+    tcp_flags: "!fin,!syn,!rst,!psh,!ack,!urg"
+    action: add-src-to-address-list
+    address_list: "port scanners"
+    address_list_timeout: 2w
+    comment: "NMAP NULL scan"
+  uaah:
+    operation: add
+    chain: input
+    src_address_list: "port scanners"
+    action: drop
+    comment: "dropping port scanners"
+    disabled: "no"
+  zzzz:
+    operation: add
+    action: log
+    # action: drop
+    chain: input
+    comment: "DROP ALL ELSE"
+    log_prefix: "INPUT DROP ALL"
+
+# i know , fugly solution but a non-existing dict will break a loop.
+interface_bond_slaves:
+  - ether2
+  - ether3
+  - ether9
+  - ether10
+
+interface_bonds:
+  bond-1:
+    mode: 802.3ad
+    interfaces: ether4,ether5
+  bond-2:
+    mode: balance-xor
+    arp_monitor_ip: 192.168.88.10
+    interfaces: ether3
+
+wireless_profile:
+  default:
+    default_profile: true
+    auth_type: wpa2-psk
+    password: hottentottententoonstelling
+  extra_profile:
+    default_profile: false
+    auth_type: wpa2-psk
+    password: abracadabrakofschiptitanic
+
+wireless_interface:
+  wlan1:
+    default_interface: true
+    band: 2ghz-b/g/n
+    channel_width: 20/40mhz-Ce
+    frequency: 2442
+    mode: ap-bridge
+    ssid: blabla
+    vlan: 20
+    vlan_mode: use-tag
+    security_profile: default
+  extra_ssid:
+    default_interface: false
+    ssid: borkborkbork
+    master_interface: wlan1
+    security_profile: extra_profile
+
+# do not add slave ports for a bond to interface list , but only the bond interface
+interface_lists:
+  - name: LAN
+    comment: "Contains all lan interfaces"
+    interfaces:
+      - ether2
+      - bond-1
+      - bond-2
+  - name: WAN
+    comment: "Contains all wan interfaces"
+    interfaces:
+      - ether1
+
+vlans:
+  - 10:
+      untagged_interfaces: ether4,ether5
+      tagged_interfaces: ether5,ether4
+      network: 192.168.88.0
+      netmask: 24
+      ip_address: 192.168.88.1
+      dns: 192.168.88.38
+      dhcp_pool: 192.168.88.10-192.168.88.250
+  - 20:
+      untagged_interfaces: ether3
+      network: 192.168.89.0
+      netmask: 24
+      ip_address: 192.168.89.1
+      dns: 192.168.88.38
+      dhcp_pool: 192.168.89.10-192.168.89.250
+      leasetime: 1d
+  - 30:
+      tagged_interfaces: ether5,ether4
+  - 40:
+      tagged_interfaces: ether5,ether4
+      network: 192.168.90.0
+      ip_address: 192.168.90.1
+      netmask: 24
