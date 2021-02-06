@@ -1,7 +1,7 @@
-## disclamer :
+## disclaimer :
 This playbook is all but done
 I made this for my own home situation, feel free to make additions , improvements etc  
-This playbook has been made with Routeros version 6.44.3
+This playbook has been made with RouterOs version 6.44.3
 
 ## how to use :
 
@@ -49,7 +49,7 @@ Example playbook :
   assign networks / dhcp servers to the vlan  
 
 ### wireless
-  ceate a security profile (kind of basic)  
+  create a security profile (kind of basic)  
   create a virtual wlan interface  
   set the master vlan interface (and set channels and such)  
 
