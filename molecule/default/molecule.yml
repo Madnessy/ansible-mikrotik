@@ -1,0 +1,37 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: delegated
+  options:
+    managed: True
+    ansible_connection_options:
+      ansible_connection: network_cli
+lint: ansible-lint
+platforms:
+  - name: rb4011
+    mikrotik_version: 6.46.8
+    user: admin
+    serial_port: 2223
+    ssh_fwd_port: 2222
+    groups:
+      - routeros
+provisioner:
+  name: ansible
+  log: true
+  config_options:
+    paramiko_connection:
+      pty: false
+    diff:
+      always: true
+  lint:
+    name: ansible-lint
+  inventory:
+    host_vars:
+      rb4011:
+        manage_wireless_interface: false
+    group_vars:
+      routeros:
+        ansible_network_os: routeros
+verifier:
+  name: ansible

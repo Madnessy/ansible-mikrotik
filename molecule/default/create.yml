@@ -1,0 +1,171 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  vars:
+    image_store_dir: "/tmp/mikrotik_image"
+  tasks:
+    - debug:
+        var: molecule_yml
+    - name: Prepare MikroTik image locally
+      block:
+        - name: Create local image directory
+          file:
+            state: directory
+            path: "{{ image_store_dir }}"
+            mode: 0755
+
+        - name: Download images
+          with_items: "{{ molecule_yml.platforms }}"
+          vars:
+            mikrotik_chr_baseimage: "chr-{{ item.mikrotik_version }}.img"
+            mikrotik_chr_baseurl: "https://download.mikrotik.com/routeros/{{ item.mikrotik_version }}/{{ mikrotik_chr_baseimage }}.zip"
+          unarchive:
+            src: "{{ mikrotik_chr_baseurl }}"
+            dest: "{{ image_store_dir }}"
+            creates: "{{ image_store_dir }}/{{ mikrotik_chr_baseimage }}"
+            remote_src: true
+
+        - name: Convert to QCOW2
+          with_items: "{{ molecule_yml.platforms }}"
+          vars:
+            mikrotik_chr_baseimage_source: "chr-{{ item.mikrotik_version }}.img"
+            mikrotik_chr_baseimage_qcow2: "chr-{{ item.mikrotik_version }}.qcow2"
+          command:
+            creates: "{{ image_store_dir }}/{{ mikrotik_chr_baseimage_qcow2 }}"
+            chdir: "{{ image_store_dir }}"
+            cmd: >2
+              qemu-img convert
+              -f raw
+              -O qcow2
+              {{ mikrotik_chr_baseimage_source }}
+              {{ mikrotik_chr_baseimage_qcow2 }}
+
+        - name: Preparing MikroTik image snapshot
+          with_items: "{{ molecule_yml.platforms }}"
+          vars:
+            mikrotik_chr_baseimage_qcow2: "chr-{{ item.mikrotik_version }}.qcow2"
+            mikrotik_chr_runimage_qcow2: "chr-{{ item.mikrotik_version }}.{{ item.name }}.qcow2"
+          command:
+            creates: "{{ image_store_dir }}/{{ mikrotik_chr_runimage_qcow2 }}"
+            chdir: "{{ image_store_dir }}"
+            cmd: >2
+              qemu-img create
+              -f qcow2
+              -F qcow2
+              -b {{ mikrotik_chr_baseimage_qcow2 }}
+              {{ mikrotik_chr_runimage_qcow2 }}
+
+    - name: Prepare MikroTik machine locally
+      block:
+        - name: Start MikroTik machine
+          with_items: "{{ molecule_yml.platforms }}"
+          vars:
+            mikrotik_chr_runimage_qcow2: "chr-{{ item.mikrotik_version }}.{{ item.name }}.qcow2"
+            instance_mac_snip: "{{ (item.name|sha1|string)[:4]|upper }}"
+            instance_mac_pref: "{{ '52:54:00:%s:%s'|format(instance_mac_snip[:2],instance_mac_snip[2:]) }}"
+          command:
+            chdir: "{{ image_store_dir }}"
+            creates: "{{ image_store_dir }}/{{ item.name }}.pid"
+            cmd: >2
+              qemu-system-x86_64
+              -nodefaults
+              -nographic
+              -M pc
+              -m 128
+              -smp cpus=2
+              -hda {{ mikrotik_chr_runimage_qcow2 }}
+              -boot c
+              -vga none
+              -serial mon:telnet:localhost:{{ item.serial_port|int }},server,nowait
+              -nic user,id=n0,mac={{ instance_mac_pref }}:50,restrict=on,hostfwd=tcp:127.0.0.1:{{ item.ssh_fwd_port|int }}-:22
+              -nic socket,id=n1,mac={{ instance_mac_pref }}:51,listen=:49231
+              -nic socket,id=n2,mac={{ instance_mac_pref }}:52,listen=:49232
+              -nic socket,id=n3,mac={{ instance_mac_pref }}:53,listen=:49233
+              -nic socket,id=n4,mac={{ instance_mac_pref }}:54,listen=:49234
+              -nic socket,id=n5,mac={{ instance_mac_pref }}:55,listen=:49235
+              -nic socket,id=n6,mac={{ instance_mac_pref }}:56,listen=:49236
+              -nic socket,id=n7,mac={{ instance_mac_pref }}:57,listen=:49237
+              -pidfile {{ image_store_dir }}/{{ item.name }}.pid
+              -daemonize
+          register: server
+          async: 7200
+          poll: 0
+
+    - name: Configure MikroTik machine base
+      when: server.changed | default(false) | bool
+      block:
+        - name: Wait for instance(s) creation to complete
+          async_status:
+            jid: "{{ item.ansible_job_id }}"
+          register: instance_jobs
+          until: instance_jobs.finished
+          retries: 300
+          with_items: "{{ server.results }}"
+
+        - name: Wait for qemu control telnet
+          with_items: "{{ server.results }}"
+          wait_for:
+            host: localhost
+            port: "{{ item.item.serial_port|int }}"
+
+        - name: Send configuration commands to RouterOS serial
+          with_items: "{{ server.results }}"
+          vars:
+            instance_mac_snip: "{{ (item.item.name|sha1|string)[:4]|upper }}"
+            instance_mac_pref: "{{ '52:54:00:%s:%s'|format(instance_mac_snip[:2],instance_mac_snip[2:]) }}"
+          telnet:
+            host: localhost
+            port: "{{ item.item.serial_port|int }}"
+            user: "{{ item.item.user|default(admin) }}"
+            password: "\n"
+            login_prompt: 'MikroTik Login: '
+            password_prompt: 'Password: '
+            send_newline: true
+            timeout: 20
+            pause: 5
+            prompts:
+              - '[>|:]'
+            command:
+              - "n\r\n"
+              - "\r\n"
+              - "\r\n"
+              - "/ip dhcp-client add interface=[/interface find mac-address~\"{{ instance_mac_pref }}:50\"] disabled=no\r\n"
+              - "\r\n"
+              - "\r\n"
+              - "/quit\r\n"
+
+        - name: Wait for Mikrotik control ssh
+          when: server.changed | default(false) | bool
+          with_items: "{{ server.results }}"
+          wait_for:
+            host: localhost
+            port: "{{ item.item.ssh_fwd_port|int }}"
+
+    - when: server.changed | default(false) | bool
+      block:
+        - name: Populate instance config dict
+          set_fact:
+            instance_conf_dict: {
+              'instance': "{{ item.item.name }}",
+              'address': "localhost",
+              'user': "{{ item.item.user }}",
+              'port': "{{ item.item.ssh_fwd_port }}",
+              'identity_file': "", }
+          with_items: "{{ server.results }}"
+          register: instance_config_dict
+
+        - name: Convert instance config dict to a list
+          set_fact:
+            instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+
+        - name: Dump instance config
+          copy:
+            content: |
+              # Molecule managed
+
+              {{ instance_conf | to_json | from_json | to_yaml }}
+            dest: "{{ molecule_instance_config }}"
+            mode: 0644
