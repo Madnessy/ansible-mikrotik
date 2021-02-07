@@ -25,28 +25,37 @@
             cmd: "cat {{ item }}"
           register: loaded_pids
 
-        - name: Export remaining PIDs
+        - name: Export PIDs with file path
           set_fact:
-            loaded_pids: "{{ loaded_pids.results | map(attribute='stdout') | list }}"
+            loaded_pids_with_fp: "{{ loaded_pids_with_fp|default([]) + [{ 'pid': item.stdout, 'fp': item.item }] }}"
+          with_items: "{{ loaded_pids.results }}"
 
         - name: Destroy molecule instance(s)
+          failed_when:
+            - '(kills.rc != 0) and ("No such process" not in kills.stderr)'
           command:
-            cmd: "kill {{ item | int }}"
+            cmd: "kill {{ item.pid|int }}"
           register: kills
-          with_items: "{{ loaded_pids }}"
+          with_items: "{{ loaded_pids_with_fp }}"
 
         - name: Wait for process kill
           wait_for:
-            path: "/proc/{{ item }}/status"
+            path: "/proc/{{ item.pid|int }}/status"
             state: absent
-          with_items: "{{ loaded_pids }}"
+          with_items: "{{ loaded_pids_with_fp }}"
           ignore_errors: yes
           register: killed
 
         - name: Force kill stuck processes
           command:
-            cmd: "kill -9 {{ item }}"
+            cmd: "kill -9 {{ item.pid|int }}"
           with_items: "{{ killed.results | select('failed') | map(attribute='item') | list }}"
+
+        - name: Clean up left-over PID files
+          file:
+            path: "{{ item.fp }}"
+            state: absent
+          with_items: "{{ kills.results | select('changed') | selectattr('stderr', 'contains', 'No such process') | map(attribute='item') | list }}"
 
     - name: Check for remaining image files
       with_items: "{{ molecule_yml.platforms }}"
