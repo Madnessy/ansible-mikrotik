@@ -1,0 +1,77 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  vars:
+    image_store_dir: "/tmp/mikrotik_image"
+  tasks:
+    - name: Check PID files
+      with_items: "{{ molecule_yml.platforms }}"
+      stat:
+        path: "{{ image_store_dir }}/{{ item.name }}.pid"
+      register: pids
+
+    - name: Export existing PID files
+      set_fact:
+        pid_files: "{{ pids.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
+
+    - when: pid_files|length > 0
+      block:
+        - name: Collect PIDs
+          with_items: "{{ pid_files }}"
+          command:
+            cmd: "cat {{ item }}"
+          register: loaded_pids
+
+        - name: Export PIDs with file path
+          set_fact:
+            loaded_pids_with_fp: "{{ loaded_pids_with_fp|default([]) + [{ 'pid': item.stdout, 'fp': item.item }] }}"
+          with_items: "{{ loaded_pids.results }}"
+
+        - name: Destroy molecule instance(s)
+          failed_when:
+            - '(kills.rc != 0) and ("No such process" not in kills.stderr)'
+          command:
+            cmd: "kill {{ item.pid|int }}"
+          register: kills
+          with_items: "{{ loaded_pids_with_fp }}"
+
+        - name: Wait for process kill
+          wait_for:
+            path: "/proc/{{ item.pid|int }}/status"
+            state: absent
+          with_items: "{{ loaded_pids_with_fp }}"
+          ignore_errors: yes
+          register: killed
+
+        - name: Force kill stuck processes
+          command:
+            cmd: "kill -9 {{ item.pid|int }}"
+          with_items: "{{ killed.results | select('failed') | map(attribute='item') | list }}"
+
+        - name: Clean up left-over PID files
+          file:
+            path: "{{ item.fp }}"
+            state: absent
+          with_items: "{{ kills.results | select('changed') | selectattr('stderr', 'contains', 'No such process') | map(attribute='item') | list }}"
+
+    - name: Check for remaining image files
+      with_items: "{{ molecule_yml.platforms }}"
+      vars:
+        mikrotik_chr_runimage_qcow2: "chr-{{ item.mikrotik_version }}.{{ item.name }}.qcow2"
+      stat:
+        path: "{{ image_store_dir }}/{{ mikrotik_chr_runimage_qcow2 }}"
+      register: images
+
+    - name: Export remaining image files
+      set_fact:
+        image_files: "{{ images.results | selectattr('stat.exists') | map(attribute='stat.path') | list }}"
+
+    - name: Cleanup remaining image files
+      when: image_files|length > 0
+      with_items: "{{ image_files }}"
+      file:
+        path: "{{ item }}"
+        state: absent

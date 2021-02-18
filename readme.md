@@ -1,7 +1,7 @@
-# disclamer :
+## disclaimer :
 This playbook is all but done
 I made this for my own home situation, feel free to make additions , improvements etc  
-This playbook has been made with Routeros version 6.44.3
+This playbook has been made with RouterOs version 6.44.3
 
 ## how to use :
 
@@ -49,7 +49,7 @@ Example playbook :
   assign networks / dhcp servers to the vlan  
 
 ### wireless
-  ceate a security profile (kind of basic)  
+  create a security profile (kind of basic)  
   create a virtual wlan interface  
   set the master vlan interface (and set channels and such)  
 
@@ -63,9 +63,24 @@ Example playbook :
 #### other remarks :
   just take a look at the default file , this maybe explain some stuff i forgot
 
-#### todo's :
+## todo's :
 
 rework bond creation , to static, will need a solution like the adding of firewall policies
 
-#### license:
+## testing:
+
+> notes:
+* utilizing Pipenv for package management
+* running Molecule with custom QEMU VM creator and MikroTik RouterOs
+
+> example:
+```
+$ pipenv update
+$ pipenv shell
+$ molecule create
+$ molecule converge
+$ molecule destroy
+```
+
+## license:
 MIT
