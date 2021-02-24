@@ -41,36 +41,36 @@ set_system_logging: true
 system_logging:
   - action: remote
     topics:
-    - name: account
-    - name: critical
-    - name: dhcp
-    - name: firewall
-    - name: health
-    - name: info
-    - name: iscsi
-    - name: manager
-    - name: ntp
-    - name: packet
-    - name: read
-    - name: ssh
-    - name: store
-    - name: ddns
-    - name: dns
-    - name: error
-    - name: interface
-    - name: l2tp
-    - name: script
-    - name: warning
-    - name: wireless
-    - name: backup
-    - name: event
-    - name: bridge
-    - name: ipsec
-    - name: ovpn
-    - name: route
-    - name: state
-    - name: system
-    - name: write
+      - name: account
+      - name: critical
+      - name: dhcp
+      - name: firewall
+      - name: health
+      - name: info
+      - name: iscsi
+      - name: manager
+      - name: ntp
+      - name: packet
+      - name: read
+      - name: ssh
+      - name: store
+      - name: ddns
+      - name: dns
+      - name: error
+      - name: interface
+      - name: l2tp
+      - name: script
+      - name: warning
+      - name: wireless
+      - name: backup
+      - name: event
+      - name: bridge
+      - name: ipsec
+      - name: ovpn
+      - name: route
+      - name: state
+      - name: system
+      - name: write
 # disabled_interfaces:
 #  - ether4
 firewall_vlan_enable: true
@@ -88,56 +88,56 @@ ntp_client_dnsnames: 0.nl.pool.ntp.org,1.nl.pool.ntp.org
 firewall_address:
   - list: not_in_internet
     entrys:
-    - address: 0.0.0.0/8
-      comment: Self-Identification [RFC 3330]
-      disabled: "no"
-    - address: 10.0.0.0/8
-      comment: "Self-Identification [RFC 3330]"
-      disabled: "no"
-    - address: 100.64.0.0/10
-      comment: "RFC6890"
-      disabled: "no"
-    - address: 127.0.0.0/8
-      comment: "Loopback [RFC 3330]"
-      disabled: "no"
-    - address: 169.254.0.0/16
-      comment: "Link Local [RFC 3330]"
-      disabled: "no"
-    - address: 172.16.0.0/12
-      comment: "Private[RFC 1918] - CLASS B"
-      disabled: "no"
-    - address: 192.0.0.0/24
-      comment: "Reserved - IANA - TestNet1"
-      disabled: "no"
-    - address: 192.0.2.0/24
-      comment: "Reserved - IANA - TestNet1"
-      disabled: "no"
-    - address: 192.88.99.0/24
-      comment: "6to4 Relay Anycast [RFC 3068]"
-      disabled: "no"
-    - address: 192.168.0.0/24
-      comment: "Private[RFC 1918]-CLASS-C"
-      disabled: "no"
-    - address: 198.18.0.0/15
-      comment: "NIDB Testing"
-      disabled: "no"
-    - address: 198.51.100.0/24
-      comment: "Reserved - IANA - TestNet2"
-      disabled: "no"
-    - address: 203.0.113.0/24
-      comment: "Reserved - IANA - TestNet3"
-      disabled: "no"
-    - address: 224.0.0.0/4
-      comment: "MC Class D IANA"
-      disabled: "no"
-    - address: 240.0.0.0/4
-      comment: "RFC6890"
-      disabled: "no"
+      - address: 0.0.0.0/8
+        comment: Self-Identification [RFC 3330]
+        disabled: "no"
+      - address: 10.0.0.0/8
+        comment: "Self-Identification [RFC 3330]"
+        disabled: "no"
+      - address: 100.64.0.0/10
+        comment: "RFC6890"
+        disabled: "no"
+      - address: 127.0.0.0/8
+        comment: "Loopback [RFC 3330]"
+        disabled: "no"
+      - address: 169.254.0.0/16
+        comment: "Link Local [RFC 3330]"
+        disabled: "no"
+      - address: 172.16.0.0/12
+        comment: "Private[RFC 1918] - CLASS B"
+        disabled: "no"
+      - address: 192.0.0.0/24
+        comment: "Reserved - IANA - TestNet1"
+        disabled: "no"
+      - address: 192.0.2.0/24
+        comment: "Reserved - IANA - TestNet1"
+        disabled: "no"
+      - address: 192.88.99.0/24
+        comment: "6to4 Relay Anycast [RFC 3068]"
+        disabled: "no"
+      - address: 192.168.0.0/24
+        comment: "Private[RFC 1918]-CLASS-C"
+        disabled: "no"
+      - address: 198.18.0.0/15
+        comment: "NIDB Testing"
+        disabled: "no"
+      - address: 198.51.100.0/24
+        comment: "Reserved - IANA - TestNet2"
+        disabled: "no"
+      - address: 203.0.113.0/24
+        comment: "Reserved - IANA - TestNet3"
+        disabled: "no"
+      - address: 224.0.0.0/4
+        comment: "MC Class D IANA"
+        disabled: "no"
+      - address: 240.0.0.0/4
+        comment: "RFC6890"
+        disabled: "no"
   - list: adminaccess
     entrys:
-    - address: 192.168.88.0/24
-      comment: "Allow lan to admin interface"
-      disabled: "no"
+      - address: 192.168.88.0/24
+        comment: "Allow lan to admin interface"
+        disabled: "no"
 
 # Used these names so we can add the policies in order
 firewall_policies:
@@ -164,7 +164,7 @@ firewall_policies:
   daaa:
     operation: add
     action: log
-  # action: drop
+    # action: drop
     chain: forward
     comment: "Drop tries to reach not public addresses from LAN"
     dst_address_list: not_in_internet
@@ -209,14 +209,14 @@ firewall_policies:
   iaaa:
     operation: add
     action: log
-   # action: drop
+    # action: drop
     chain: input
     comment: "Drop invalid"
     connection_state: invalid
   jaaa:
     operation: add
     action: log
-   # action: drop
+    # action: drop
     chain: input
     comment: "Drop all not coming from LAN"
     in_interface_list: "!LAN"

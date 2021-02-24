@@ -8,7 +8,7 @@
 - name: set  additional securtiy profiles
   routeros_command:
     commands: "/interface wireless security-profiles add name={{ item.key }} authentication-types={{item.value.auth_type}} mode=dynamic-keys supplicant-identity=MikroTik wpa-pre-shared-key={{item.value.password}} wpa2-pre-shared-key={{item.value.password}} unicast-ciphers=aes-ccm group-ciphers=aes-ccm"
-  when:  not item.value.default_profile|bool
+  when: not item.value.default_profile|bool
   with_dict: "{{ wireless_profile }}"
 
 - name: set  default wireless interfaces with vlan

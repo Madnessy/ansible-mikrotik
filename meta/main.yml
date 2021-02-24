@@ -5,9 +5,9 @@ galaxy_info:
   license: MIT
   min_ansible_version: 2.7
   platforms:
-   - name: RouterOs
-     versions:
-     - 6.44.3
+    - name: RouterOs
+      versions:
+        - 6.44.3
   galaxy_tags:
     - mikrotik
     - routeros
