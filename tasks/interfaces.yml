@@ -1,3 +1,4 @@
+---
 - name: disable interfaces
   routeros_command:
     commands:

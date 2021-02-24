@@ -1,3 +1,4 @@
+---
 - name: Add adresses to lists
   routeros_command:
     commands: "/ip firewall address-list {{ item.1.action | default ('add') }} address={{ item.1.address }} comment=\"{{ item.1.comment }}\" disabled={{ item.1.disabled }} list={{ item.0.list }}"
@@ -5,8 +6,8 @@
     - "{{ firewall_address }}"
     - entrys
 
-#- name: Add adresses without list
-#  routeros_command:
-#    commands: "/ip firewall address-list {{ item.value.action | default ('add') }} address={{ item.key }} comment={{ item.value.comment }} disabled={{ item.value.disabled }}"
-#  with_dict: "{{ firewall_address }}"
-#  when: item.value.list is undefined
+# - name: Add adresses without list
+#   routeros_command:
+#     commands: "/ip firewall address-list {{ item.value.action | default ('add') }} address={{ item.key }} comment={{ item.value.comment }} disabled={{ item.value.disabled }}"
+#   with_dict: "{{ firewall_address }}"
+#   when: item.value.list is undefined

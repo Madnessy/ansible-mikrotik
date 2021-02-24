@@ -1,10 +1,11 @@
+---
 - include: system.yml
 - include: interfaces.yml
 - include: wireless.yml
   when: manage_wireless_interface
 - include: vlan.yml
 - include: hardening.yml
-#- include: vpn.yml
+# - include: vpn.yml
 #  when: manage_vpn
 - include: firewall_addressess.yml
   when: manage_firewall
