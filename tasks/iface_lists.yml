@@ -1,0 +1,31 @@
+---
+
+- name: create interfaces lists
+  routeros_command:
+    commands:
+      - "/interface list add name={{ item.name }} comment=\"{{ item.comment }}\""
+  when:
+    - item.enabled|default(False)
+  with_items: "{{ managed_interface_lists }}"
+
+- name: add interface to interface lists
+  routeros_command:
+    commands:
+      - "/interface list member add interface={{ item.1 }} list={{ item.0.name }}"
+  with_subelements:
+    - "{{ managed_interface_lists }}"
+    - interfaces
+  when:
+    - item.enabled|default(False)
+
+- name: remove interface lists
+  routeros_command:
+    commands:
+      - "/interface list remove {{ item.0.name }}"
+  with_subelements:
+    - "{{ managed_interface_lists }}"
+    - interfaces
+  when:
+    - not item.enabled|default(False)
+
+...

@@ -1,0 +1,22 @@
+---
+
+- name: en/disable interface
+  with_dict: "{{ managed_ethers }}"
+  vars:
+    mt_nic_disabled: "{{ item.value.enabled|ternary('no', 'yes', 'no')}}"
+  routeros_command:
+    commands:
+      - "/interface set {{ item.key }} disabled={{ mt_nic_disabled }} comment={{ item.value.comment|default('\"\"') }}"
+    wait_for:
+      - result[0] not contains "error"
+
+- name: handle base ether item setup
+  with_dict: "{{ managed_ethers }}"
+  loop_control:
+    loop_var: item
+  vars:
+    iface_name: "{{ item.key }}"
+    iface: "{{ item.value }}"
+  include: iface_base_item.yml
+
+...

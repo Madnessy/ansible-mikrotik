@@ -1,0 +1,81 @@
+---
+
+- name: publish bond ports list
+  set_fact:
+    interface_bond_slaves: "{{ managed_bonds|dict2items|selectattr('value')|map(attribute='value')|map(attribute='interfaces')|flatten(levels=1)|unique|default([]) }}"
+
+- name: remove interfaces from bridge which will become bonds
+  routeros_command:
+    commands:
+      - "/interface bridge port remove numbers=[ /interface find default-name={{ item }} or name={{ item }} ] "
+  with_items:
+    - "{{ interface_bond_slaves }}"
+  when:
+    - interface_bond_slaves is defined
+
+- name: assert bond mode set
+  with_dict: "{{ managed_bonds }}"
+  loop_control:
+    label: "{{ item.key }}"
+  assert:
+    that:
+      - item.value.mode|default('none') is defined
+      - item.value.mode in iface_bond_modes
+    success_msg: "bond-mode set"
+    fail_msg: "no bond-mode set"
+
+- name: assert bond members set
+  with_dict: "{{ managed_bonds }}"
+  loop_control:
+    label: "{{ item.key }}"
+  assert:
+    that:
+      - item.value.interfaces|default(None) is defined
+      - item.value.interfaces is iterable
+      - item.value.interfaces|length > 0
+    success_msg: "bond-members set"
+    fail_msg: "no bond-members set"
+
+- name: create bonds
+  routeros_command:
+    commands:
+      - "/interface bonding add link-monitoring=none mode={{ item.value.mode }} name={{ item.key }} slaves={{ item.value.interfaces|join(',') }}"
+    wait_for:
+      - result[0] not contains "error"
+  with_dict: "{{ managed_bonds }}"
+  when:
+    - item.value.enabled|default(False)
+
+- name: delete bond
+  routeros_command:
+    commands:
+      - "/interface bonding remove {{ item.key }}"
+    wait_for:
+      - result[0] not contains "error"
+  with_dict: "{{ managed_bonds }}"
+  when:
+    - not item.value.enabled|default(False)
+
+- name: set arp link-monitoring
+  with_dict: "{{ managed_bonds }}"
+  when:
+    - item.value.link_mon_mode|default('none') == 'arp'
+    - item.value.enabled|default(False)
+  routeros_command:
+    commands:
+      - "/interface bonding set {{ item.key }} link-monitoring={{ item.value.link_mon_mode }} arp-ip-targets={{ item.value.link_mon_arp_monitor_ip }}"
+    wait_for:
+      - result[0] not contains "error"
+
+- name: set mii/none link-monitoring
+  with_dict: "{{ managed_bonds }}"
+  when:
+    - item.value.link_mon_mode|default('none') in ['mii','none']
+    - item.value.enabled|default(False)
+  routeros_command:
+    commands:
+      - "/interface bonding set {{ item.key }} link-monitoring={{ item.value.link_mon_mode }}"
+    wait_for:
+      - result[0] not contains "error"
+
+...
