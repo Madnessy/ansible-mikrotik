@@ -12,6 +12,7 @@ platforms:
   - name: rb4011
     mikrotik_version: 6.46.8
     user: admin
+    #l2mtu: 2048  # https://wiki.mikrotik.com/wiki/Manual:Maximum_Transmission_Unit_on_RouterBoards
     serial_port: 2223
     ssh_fwd_port: 2222
     groups:

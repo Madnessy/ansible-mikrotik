@@ -4,13 +4,6 @@
   connection: network_cli
   gather_facts: false
   tasks:
-    - name: demo run
-      routeros_command:
-        commands:
-          - "/system identity print"
-      register: output
-    - debug:
-        msg: "{{ output }}"
     - name: "Include ansible-mikrotik"
       include_role:
         name: "ansible-mikrotik"
