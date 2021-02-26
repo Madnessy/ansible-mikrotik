@@ -1,0 +1,21 @@
+---
+
+upgrade_script_name: "upgrade-script"
+upgrade_script_event: >-2
+  system package update check-for-updates once
+  :delay 1s;
+  :if ( [get status] = \"New version is available\")
+  do={ install }
+
+backup_script_name: "backup-script"
+backup_script_event: system backup save name=today.backup
+
+iface_bond_modes:
+  - 802.3ad
+  - active-backup
+  - balance-alb
+  - balance-rr
+  - balance-tlb
+  - balance-xor
+  - broadcast
+
