@@ -53,16 +53,18 @@ managed_bonds:
 
 managed_vlans:
   10:
+    enabled: false
     name: VLAN10
-    untagged_interfaces: ether4,ether5
-    tagged_interfaces: ether5,ether4
+    interface: bond2
     #network: 192.168.88.0
     #netmask: 24
     #ip_address: 192.168.88.1
     #dns: 192.168.88.38
     #dhcp_pool: 192.168.88.10-192.168.88.250
   20:
-    untagged_interfaces: ether3
+    enabled: true
+    untagged_interfaces:
+      - ether6
     #network: 192.168.89.0
     #netmask: 24
     #ip_address: 192.168.89.1
@@ -70,13 +72,20 @@ managed_vlans:
     #dhcp_pool: 192.168.89.10-192.168.89.250
     #leasetime: 1d
   30:
-    tagged_interfaces: ether5,ether4
+    enabled: false
+    tagged_interfaces:
+      - ether5
+      - ether6
   40:
-    tagged_interfaces: ether5,ether4
-    #network: 192.168.90.0
-    #ip_address: 192.168.90.1
-    #netmask: 24
+    enabled: false
+    tagged_interfaces:
+      - ether5
+      - ether6
+    network: 192.168.90.0
+    ip_address: 192.168.90.1
+    netmask: 24
   50:
+    enabled: false
     interface: bond1
 
 ##########################

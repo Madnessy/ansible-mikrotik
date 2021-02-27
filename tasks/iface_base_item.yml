@@ -11,6 +11,7 @@
       - "/ip address add address={{ iface.ip_address }}/{{ iface.netmask|int }} comment=addr-{{ iface_name }} interface={{ iface_name }} network={{ iface.network|default('') }}"
     wait_for:
       - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
 
 - name: "{{ iface_name }}: clean ip address"
   when:
@@ -22,6 +23,7 @@
       - "/ip address remove numbers=[/ip address find interface={{ iface_name }}]"
     wait_for:
       - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
  
 - name: "{{ iface_name }}: set dhcp client"
   when:
@@ -36,9 +38,9 @@
           - "put [/ip dhcp-client find interface={{ iface_name }}]"
         wait_for:
           - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
       register: check_dhclient
-    - debug:
-        var: check_dhclient
+
     - name: "{{ iface_name }}: set dhcp client"
       when: check_dhclient.stdout|first|length == 0
       vars:
@@ -49,9 +51,7 @@
           - "/ip dhcp-client add interface={{ iface_name }} comment=dhcp-client-{{ iface_name }} use-peer-dns={{ use_dhcp_dns }} add-default-route={{ use_dhcp_gw }}"
         wait_for:
           - result[0] not contains "error"
-      register: test1
-    - debug:
-        var: test1
+          - result[0] not contains "expected end of command line"
 
 - name: "{{ iface_name }}: clean dhcp client"
   when:
@@ -65,6 +65,7 @@
       - "/ip dhcp-client remove numbers=[/ip dhcp-client find interface={{ iface_name }}]"
     wait_for:
       - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
 
 - name: "{{ iface_name }}: set dhcp server"
   when:
@@ -77,6 +78,7 @@
           - iface.ip_address is defined
           - iface.network is defined
           - iface.netmask is defined
+
     - name: "{{ iface_name }}: set dhcp server"
       when:
         - iface.enabled
@@ -86,9 +88,13 @@
           - "/ip dhcp-server add address-pool=dhcp-pool-{{ iface_name }} disabled=no interface={{ iface_name }} name=dhcp-server-{{ iface_name }} lease-time={{ iface.leasetime|default('1d') }}"
           - "/ip dhcp-server network add comment=dhcp-server-{{ iface_name }}-basenet address={{ iface.network }}/{{ iface.netmask }} dns-server={{ iface.dns|default(iface.ip_address) }} gateway={{ iface.ip_address }} netmask={{ iface.netmask }}"
         wait_for:
-          - result[0] not contains "error" and result[0] not contains "expected end of command line"
-          - result[1] not contains "error" and result[1] not contains "expected end of command line"
-          - result[2] not contains "error" and result[2] not contains "expected end of command line"
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+          - result[1] not contains "error"
+          - result[1] not contains "expected end of command line"
+          - result[2] not contains "error"
+          - result[2] not contains "expected end of command line"
+
     - name: "{{ iface_name }}: clean dhcp server"
       when:
         - not iface.enabled
@@ -98,8 +104,11 @@
           - "/ip dhcp-server remove dhcp-server-{{ iface_name }}"
           - "/ip dhcp-server network remove numbers=[/ip dhcp-server network find comment=dhcp-server-{{ iface_name }}-basenet]"
         wait_for:
-          - result[0] not contains "error" and result[0] not contains "expected end of command line"
-          - result[1] not contains "error" and result[1] not contains "expected end of command line"
-          - result[2] not contains "error" and result[2] not contains "expected end of command line"
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+          - result[1] not contains "error"
+          - result[1] not contains "expected end of command line"
+          - result[2] not contains "error"
+          - result[2] not contains "expected end of command line"
 
 ...
