@@ -23,7 +23,7 @@ Example playbook :
 ```
 
 - hosts: hosts
-  remote_user: admin
+  remote_user: admin+t
   connection: network_cli
   gather_facts: false
   roles:
@@ -36,7 +36,9 @@ Example playbook :
   some basic hardening stuff that mikrotik advises to do
 
 ### firewall
-  add policies , not removing
+  add policies , not removing , made idempotent.
+  needs username +t (this disables detection of terminal capabilities https://wiki.mikrotik.com/wiki/Manual:Console_login_process#Console_login_options )
+
 
 ### interfaces
   create a 802.3ad bond or a balance-xor bond  

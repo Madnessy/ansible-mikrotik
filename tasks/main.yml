@@ -1,16 +1,27 @@
 ---
-- include: system.yml
-- include: interfaces.yml
-- include: wireless.yml
-  when: manage_wireless_interface
-- include: vlan.yml
-- include: hardening.yml
+#- include: system.yml
+#- include: interfaces.yml
+#- include: wireless.yml
+#  when: manage_wireless_interface
+#- include: vlan.yml
+#- include: hardening.yml
 # - include: vpn.yml
 #  when: manage_vpn
-- include: firewall_addressess.yml
-  when: manage_firewall
+#- include: firewall_addressess.yml
+#  when: manage_firewall
 # Manage the firewall policies
+- name: Fetch current list of firewall policies
+  routeros_command:
+    commands: "/ip firewall export verbose hide-sensitive terse compact"
+  register: __firewall_policies_output
+  when: manage_firewall
 - name: Create the policies
+  include_tasks: manage_firewall_policy.yml
+  with_list: "{{ firewall_policies | dictsort }}"
+  loop_control:
+    loop_var: firewall_policies_item
+  when: manage_firewall
+- name: Remove obsolete policies
   include_tasks: manage_firewall_policy.yml
   with_list: "{{ firewall_policies | dictsort }}"
   loop_control:

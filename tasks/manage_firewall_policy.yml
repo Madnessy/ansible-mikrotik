@@ -9,3 +9,20 @@
   routeros_command:
     commands:
       - "{{ l_fw_command }}"
+  with_dict: "{{ firewall_policies }}"
+  when:
+    - item.key == firewall_policies_item.0
+    - __firewall_policies_output.stdout is not search(item.value.comment)
+
+- name: Place firewall policy at correct place
+  routeros_command:
+    commands:
+      - '/ip firewall filter move numbers=[find comment={{item.value.comment}} ] destination={{ __fw_rule_counter }}'
+  with_dict: "{{ firewall_policies }}"
+  when:
+    - item.key == firewall_policies_item.0
+#    - __firewall_policies_output.stdout is not search(item.value.comment)
+
+- name: Set order for next firewall policy
+  set_fact:
+    __fw_rule_counter: "{{ __fw_rule_counter | int + 1 }}"

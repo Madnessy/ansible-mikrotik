@@ -1,4 +1,5 @@
 ---
+__fw_rule_counter: 1
 ansible_network_os: routeros
 # switches to enable or disable wireless / firewall
 manage_firewall: true
@@ -155,18 +156,18 @@ firewall_policies:
     connection_state: established,related
   caaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop invalid"
+    comment: "accept invalid"
     connection_state: invalid
     log: "yes"
     log_prefix: invalid
   daaa:
     operation: add
     action: log
-    # action: drop
+    # action: accept
     chain: forward
-    comment: "Drop tries to reach not public addresses from LAN"
+    comment: "accept tries to reach not public addresses from LAN"
     dst_address_list: not_in_internet
     in_interface: bridge1
     log: "yes"
@@ -174,9 +175,9 @@ firewall_policies:
     out_interface: "!bridge1"
   eaaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop incoming packets that are not NATted"
+    comment: "accept incoming packets that are not NATted"
     connection_nat_state: "!dstnat"
     connection_state: new
     in_interface: ether1
@@ -184,18 +185,18 @@ firewall_policies:
     log_prefix: "!NAT"
   faaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop incoming from internet which is not public IP"
+    comment: "accept incoming from internet which is not public IP"
     in_interface: ether1
     log: "yes"
     log_prefix: "!public"
     src_address_list: not_in_internet
   gaaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop packets from LAN that do not have LAN IP"
+    comment: "accept packets from LAN that do not have LAN IP"
     in_interface: bridge1
     log: "yes"
     log_prefix: LAN_!LAN
@@ -209,16 +210,16 @@ firewall_policies:
   iaaa:
     operation: add
     action: log
-    # action: drop
+    # action: accept
     chain: input
-    comment: "Drop invalid"
+    comment: "accept invalid"
     connection_state: invalid
   jaaa:
     operation: add
     action: log
-    # action: drop
+    # action: accept
     chain: input
-    comment: "Drop all not coming from LAN"
+    comment: "accept all not coming from LAN"
     in_interface_list: "!LAN"
   kaaa:
     operation: add
@@ -251,7 +252,7 @@ firewall_policies:
     protocol: tcp
   oaaa:
     operation: add
-    action: drop
+    action: accept
     chain: input
     comment: "Deny WAN DNS queries UDP"
     dst_port: 53
@@ -260,7 +261,7 @@ firewall_policies:
     protocol: udp
   paaa:
     operation: add
-    action: drop
+    action: accept
     chain: input
     comment: "Deny WAN DNS queries_TCP"
     dst_port: 53
@@ -268,15 +269,15 @@ firewall_policies:
     protocol: tcp
   saaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop invalid"
+    comment: "accept invalid"
     connection_state: invalid
   taaa:
     operation: add
-    action: drop
+    action: accept
     chain: forward
-    comment: "Drop all from WAN not DSTNATed"
+    comment: "accept all from WAN not DSTNATed"
     connection_nat_state: "!dstnat"
     connection_state: new
     in_interface_list: WAN
@@ -348,16 +349,16 @@ firewall_policies:
     operation: add
     chain: input
     src_address_list: "port scanners"
-    action: drop
-    comment: "dropping port scanners"
+    action: accept
+    comment: "acceptping port scanners"
     disabled: "no"
   zzzz:
     operation: add
     action: log
-    # action: drop
+    # action: accept
     chain: input
-    comment: "DROP ALL ELSE"
-    log_prefix: "INPUT DROP ALL"
+    comment: "accept ALL ELSE"
+    log_prefix: "INPUT accept ALL"
 
 # i know , fugly solution but a non-existing dict will break a loop.
 interface_bond_slaves:
