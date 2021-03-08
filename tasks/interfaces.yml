@@ -1,5 +1,9 @@
 ---
 
+- name: Loading Wireless management tasks
+  include: wireless.yml
+  when: manage_wireless_interfaces|default(False)
+
 - name: handling ether interfaces
   include: iface_ethers.yml
   when:

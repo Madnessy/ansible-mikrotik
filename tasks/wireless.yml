@@ -1,19 +1,24 @@
+---
+
 - name: set default securtiy profiles first
   routeros_command:
-    commands: "/interface wireless security-profiles set [ find default=yes ] authentication-types={{item.value.auth_type}} mode=dynamic-keys supplicant-identity=MikroTik wpa-pre-shared-key={{item.value.password}} wpa2-pre-shared-key={{item.value.password}} unicast-ciphers=aes-ccm group-ciphers=aes-ccm"
+    commands:
+      - "/interface wireless security-profiles set [ find default=yes ] authentication-types={{ item.value.auth_type }} mode=dynamic-keys supplicant-identity=MikroTik wpa-pre-shared-key={{ item.value.password }} wpa2-pre-shared-key={{ item.value.password }} unicast-ciphers=aes-ccm group-ciphers=aes-ccm"
   when: item.value.default_profile|bool
   with_dict: "{{ wireless_profile }}"
 
 - name: set  additional securtiy profiles
   routeros_command:
-    commands: "/interface wireless security-profiles add name={{ item.key }} authentication-types={{item.value.auth_type}} mode=dynamic-keys supplicant-identity=MikroTik wpa-pre-shared-key={{item.value.password}} wpa2-pre-shared-key={{item.value.password}} unicast-ciphers=aes-ccm group-ciphers=aes-ccm"
+    commands:
+      - "/interface wireless security-profiles add name={{ item.key }} authentication-types={{ item.value.auth_type }} mode=dynamic-keys supplicant-identity=MikroTik wpa-pre-shared-key={{ item.value.password }} wpa2-pre-shared-key={{ item.value.password }} unicast-ciphers=aes-ccm group-ciphers=aes-ccm"
   when:  not item.value.default_profile|bool
   with_dict: "{{ wireless_profile }}"
 
 
 - name: set  default wireless interfaces with vlan
   routeros_command:
-    commands: "/interface wireless set [ find default-name={{item.key}} ] band={{item.value.band}} channel-width={{item.value.channel_width}} disabled=no distance=indoors frequency={{item.value.frequency }} mode={{item.value.mode}} ssid={{item.value.ssid}} vlan-id={{item.value.vlan}} vlan-mode={{item.value.vlan_mode}} wds-default-bridge=bridge wireless-protocol=802.11 security-profile={{item.value.security_profile}}"
+    commands:
+      - "/interface wireless set [ find default-name={{ item.key }} ] band={{ item.value.band }} channel-width={{ item.value.channel_width }} disabled=no distance=indoors frequency={{ item.value.frequency }} mode={{ item.value.mode }} ssid={{ item.value.ssid }} vlan-id={{ item.value.vlan }} vlan-mode={{ item.value.vlan_mode }} wds-default-bridge=bridge wireless-protocol=802.11 security-profile={{ item.value.security_profile }}"
   when:
   - item.value.default_interface|bool
   - item.value.vlan is defined
@@ -21,7 +26,8 @@
 
 - name: set  default wireless interfaces without vlan
   routeros_command:
-    commands: "/interface wireless set [ find default-name={{item.key}} ] band={{item.value.band}} channel-width={{item.value.channel_width}} disabled=no distance=indoors frequency={{item.value.frequency }} mode={{item.value.mode}} ssid={{item.value.ssid}} wds-default-bridge=bridge wireless-protocol=802.11 security-profile={{item.value.security_profile}}"
+    commands:
+      - "/interface wireless set [ find default-name={{ item.key }} ] band={{ item.value.band }} channel-width={{ item.value.channel_width }} disabled=no distance=indoors frequency={{ item.value.frequency }} mode={{ item.value.mode }} ssid={{ item.value.ssid }} wds-default-bridge=bridge wireless-protocol=802.11 security-profile={{ item.value.security_profile }}"
   when:
   - item.value.default_interface|bool
   - item.value.vlan is undefined
@@ -30,7 +36,7 @@
 - name: add interfaces with vlan
   routeros_command:
     commands:
-      - "/interface wireless add disabled=no master-interface={{item.value.master_interface}} name={{item.key}} ssid={{item.value.ssid}} vlan-id={{item.value.vlan}} vlan-mode={{item.value.vlan_mode}} wds-default-bridge=bridge wps-mode=disabled security-profile={{item.value.security_profile}}"
+      - "/interface wireless add disabled=no master-interface={{ item.value.master_interface }} name={{ item.key }} ssid={{ item.value.ssid }} vlan-id={{ item.value.vlan }} vlan-mode={{ item.value.vlan_mode }} wds-default-bridge=bridge wps-mode=disabled security-profile={{ item.value.security_profile }}"
       - "/interface bridge port add bridge=bridge interface={{ item.key }}"
   when:
   - not item.value.default_interface|bool
@@ -40,9 +46,11 @@
 - name: add interfaces without vlan
   routeros_command:
     commands:
-      - "/interface wireless add disabled=no master-interface={{item.value.master_interface}} name={{item.key}} ssid={{item.value.ssid}} wds-default-bridge=bridge wps-mode=disabled security-profile={{item.value.security_profile}}"
+      - "/interface wireless add disabled=no master-interface={{ item.value.master_interface }} name={{ item.key }} ssid={{ item.value.ssid }} wds-default-bridge=bridge wps-mode=disabled security-profile={{ item.value.security_profile }}"
       - "/interface bridge port add bridge=bridge interface={{ item.key }}"
   when:
   - not item.value.default_interface|bool
   - item.value.vlan is undefined
   with_dict: "{{ wireless_interface }}"
+
+...
