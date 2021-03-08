@@ -9,6 +9,7 @@
       - "/interface set {{ item.key }} disabled={{ mt_nic_disabled }} comment={{ item.value.comment|default('\"\"') }}"
     wait_for:
       - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
 
 - name: handle base ether item setup
   with_dict: "{{ managed_ethers }}"

@@ -4,6 +4,9 @@
   routeros_command:
     commands:
       - "/interface list add name={{ item.name }} comment=\"{{ item.comment }}\""
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
   when:
     - item.enabled|default(False)
   with_items: "{{ managed_interface_lists }}"
@@ -12,6 +15,9 @@
   routeros_command:
     commands:
       - "/interface list member add interface={{ item.1 }} list={{ item.0.name }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
   with_subelements:
     - "{{ managed_interface_lists }}"
     - interfaces
@@ -22,6 +28,9 @@
   routeros_command:
     commands:
       - "/interface list remove {{ item.0.name }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
   with_subelements:
     - "{{ managed_interface_lists }}"
     - interfaces
