@@ -19,3 +19,5 @@ iface_bond_modes:
   - balance-xor
   - broadcast
 
+default_untagged_pvid: 1
+default_vlif_master: bridge
