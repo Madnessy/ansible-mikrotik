@@ -1,0 +1,169 @@
+
+manage_ethers: true
+manage_bonds: true
+manage_vlans: true
+manage_wireless: false
+manage_iface_lists: false
+
+managed_ethers:
+  ether1:
+    enabled: true
+    comment: fubar01
+  ether2:
+    enabled: true
+    comment: fubar02
+  ether3:
+    enabled: true
+  ether4:
+    enabled: true
+    # dhcp_client: true
+  ether5:
+    enabled: true
+    # network: 192.168.88.0
+    # netmask: 24
+    # ip_address: 192.168.88.1
+    # dns: 192.168.88.38
+    # dhcp_pool: 192.168.88.10-192.168.88.250
+  ether6:
+    enabled: true
+  ether7:
+    enabled: true
+  ether8:
+    enabled: true
+
+managed_bonds:
+  bond1:
+    enabled: true
+    mode: 802.3ad
+    mtu: 2048
+    link_mon_mode: mii
+    interfaces:
+      - ether1
+      - ether2
+  bond2:
+    enabled: false
+    mode: balance-xor
+    mtu: 2048
+    link_mon_mode: arp
+    link_mon_arp_monitor_ip: 192.168.88.10
+    interfaces:
+      - ether3
+      - ether4
+
+managed_vlans:
+  10:
+    enabled: false
+    name: VLAN10
+    interface: bond2
+    #network: 192.168.88.0
+    #netmask: 24
+    #ip_address: 192.168.88.1
+    #dns: 192.168.88.38
+    #dhcp_pool: 192.168.88.10-192.168.88.250
+  20:
+    enabled: true
+    untagged_interfaces:
+      - ether6
+    #network: 192.168.89.0
+    #netmask: 24
+    #ip_address: 192.168.89.1
+    #dns: 192.168.88.38
+    #dhcp_pool: 192.168.89.10-192.168.89.250
+    #leasetime: 1d
+  30:
+    enabled: false
+    tagged_interfaces:
+      - ether5
+      - ether6
+  40:
+    enabled: false
+    tagged_interfaces:
+      - ether5
+      - ether6
+    network: 192.168.90.0
+    ip_address: 192.168.90.1
+    netmask: 24
+  50:
+    enabled: false
+    interface: bond1
+
+managed_interface_lists:
+  - name: LAN
+    enabled: true
+    comment: "Contains all lan interfaces"
+    interfaces:
+      - bond-1
+      - bond-2
+  - name: WAN
+    enabled: false
+    comment: "Contains all wan interfaces"
+    interfaces:
+      - ether5
+
+set_system_logging: false
+set_system_logging_remote: false
+system_logging_remote_ip: 192.168.88.101
+system_logging_remote_ip_port: 514
+system_logging:
+  - action: remote
+    topics:
+    - name: account
+      state: absent
+    - name: critical
+      #state: absent
+    - name: dhcp
+      state: absent
+    - name: firewall
+      state: absent
+    - name: health
+      state: absent
+    - name: info
+      state: absent
+    - name: iscsi
+      state: absent
+    - name: manager
+      state: absent
+    - name: ntp
+      state: absent
+    - name: packet
+      state: absent
+    - name: read
+      state: absent
+    - name: ssh
+      state: absent
+    - name: store
+      state: absent
+    - name: ddns
+      state: absent
+    - name: dns
+      state: absent
+    - name: error
+      state: absent
+    - name: interface
+      state: absent
+    - name: l2tp
+      state: absent
+    - name: script
+      state: absent
+    - name: warning
+      state: absent
+    - name: wireless
+      state: absent
+    - name: backup
+      state: absent
+    - name: event
+      state: absent
+    - name: bridge
+      state: absent
+    - name: ipsec
+      state: absent
+    - name: ovpn
+      state: absent
+    - name: route
+      state: absent
+    - name: state
+      state: absent
+    - name: system
+      state: absent
+    - name: write
+      state: absent
