@@ -2,32 +2,34 @@
 
 - name: Loading Wireless management tasks
   include: wireless.yml
-  when: manage_wireless_interfaces|default(False)
+  when: manage_wireless|default(False)
 
 - name: handling ether interfaces
   include: iface_ethers.yml
   when:
     - managed_ethers is defined
     - managed_ethers is iterable
+    - manage_ethers|default(False)
 
 - name: handling bond interfaces
   include: iface_bonds.yml
   when:
     - managed_bonds is defined
     - managed_bonds is iterable
+    - manage_bonds|default(False)
 
 - name: handling vlan interfaces
   include: iface_vlans.yml
   when:
     - managed_vlans is defined
     - managed_vlans is iterable
+    - manage_vlans|default(False)
 
 - name: handling interface lists
-  tags:
-    - never
   include: iface_lists.yml
   when:
     - managed_interface_lists is defined
     - managed_interface_lists is iterable
+    - manage_iface_lists|default(False)
 
 ...

@@ -65,13 +65,13 @@
       block:
           - name: grep interface names
             set_fact:
-              tagged_iface_list: "{{ internal_enabled_tagged_vlans | map(attribute='value') | map(attribute='tagged_interfaces') | list}}"
-              untagged_iface_list: "{{ internal_enabled_untagged_vlans | map(attribute='value') | map(attribute='untagged_interfaces') | list}}"
+              tagged_iface_list: "{{ internal_enabled_tagged_vlans | map(attribute='value') | map(attribute='tagged_interfaces') | list }}"
+              untagged_iface_list: "{{ internal_enabled_untagged_vlans | map(attribute='value') | map(attribute='untagged_interfaces') | list }}"
 
           - name: grep all bridged vlan interfaces
             set_fact:
               iface_list: "{{ (tagged_iface_list + untagged_iface_list) | flatten | unique  }}"
-    
+
           - name: check bond interfaces not part of bridged vlan interfaces
             when:
               - iface_list | intersect(interface_bond_slaves) | length > 0
@@ -86,7 +86,7 @@
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
       when: firewall_vlan_enable|default(False)
-    
+
     - name: ensure vlan master iface
       routeros_command:
         commands:
@@ -94,7 +94,7 @@
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
-      
+
     - name: set vlan filtering on bridge
       routeros_command:
         commands:
@@ -106,7 +106,7 @@
     - name: set pvid on untagged port
       routeros_command:
         commands:
-          - "/interface bridge port set numbers=[find interface={{ item.1 }} ] pvid={{ item.0.id|default(default_untagged_pvid)|int }}" 
+          - "/interface bridge port set numbers=[find interface={{ item.1 }} ] pvid={{ item.0.id|default(default_untagged_pvid)|int }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -127,7 +127,7 @@
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
       register: output_collection
-    
+
     - name: bridged interface - evaluate commands
       loop: "{{ internal_enabled_bridge_vlans }}"
       loop_control:
@@ -152,7 +152,7 @@
       when:
         - item.value.untagged_interfaces is defined
         - item.value.tagged_interfaces is defined
-    
+
     - name: bridged interface - create bridge vlans (with tagged )
       routeros_command:
         commands:
@@ -164,7 +164,7 @@
       when:
         - item.value.untagged_interfaces is undefined
         - item.value.tagged_interfaces is defined
-    
+
     - name: bridged interface - create bridge vlans (with untagged )
       routeros_command:
         commands:

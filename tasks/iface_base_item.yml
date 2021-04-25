@@ -24,7 +24,7 @@
     wait_for:
       - result[0] not contains "error"
       - result[0] not contains "expected end of command line"
- 
+
 - name: "{{ iface_name }}: set dhcp client"
   when:
     - not iface.ip_address|default(None)
@@ -84,7 +84,7 @@
         - iface.enabled
       routeros_command:
         commands:
-          - "/ip pool add name=dhcp-pool-{{ iface_name }} ranges={{ iface.dhcp_pool}}"
+          - "/ip pool add name=dhcp-pool-{{ iface_name }} ranges={{ iface.dhcp_pool }}"
           - "/ip dhcp-server add address-pool=dhcp-pool-{{ iface_name }} disabled=no interface={{ iface_name }} name=dhcp-server-{{ iface_name }} lease-time={{ iface.leasetime|default('1d') }}"
           - "/ip dhcp-server network add comment=dhcp-server-{{ iface_name }}-basenet address={{ iface.network }}/{{ iface.netmask }} dns-server={{ iface.dns|default(iface.ip_address) }} gateway={{ iface.ip_address }} netmask={{ iface.netmask }}"
         wait_for:
