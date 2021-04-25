@@ -1,121 +1,100 @@
 # general management switches
-manage_interfaces: true
+manage_interfaces: false
 manage_wireless_interfaces: false
-manage_vlans: true
-firewall_vlan_enable: true
+manage_vlans: false
+firewall_vlan_enable: false
 
 ##############################
 
-managed_ethers:
-  ether1:
-    enabled: true
-    comment: fubar01
-  ether2:
-    enabled: true
-    comment: fubar02
-  ether3:
-    enabled: true
-  ether4:
-    enabled: true
-    # dhcp_client: true
-  ether5:
-    enabled: true
-    # network: 192.168.88.0
-    # netmask: 24
-    # ip_address: 192.168.88.1
-    # dns: 192.168.88.38
-    # dhcp_pool: 192.168.88.10-192.168.88.250
-  ether6:
-    enabled: true
-  ether7:
-    enabled: true
-  ether8:
-    enabled: true
+# definition:
+# <ETHER-name>:
+#   enabled: BOOL
+#   comment: STRING
+#   dhcp_client: BOOL
+#   network: NET-IP
+#   netmask: INT
+#   ip_address: IFACE-IP
+#   dns: IP
+#   dhcp_pool: IP-IP
+managed_ethers: {}
 
-managed_bonds:
-  bond1:
-    enabled: true
-    mode: 802.3ad
-    mtu: 2048
-    link_mon_mode: mii
-    interfaces:
-      - ether1
-      - ether2
-  bond2:
-    enabled: false
-    mode: balance-xor
-    mtu: 2048
-    link_mon_mode: arp
-    link_mon_arp_monitor_ip: 192.168.88.10
-    interfaces:
-      - ether3
-      - ether4
+# definition:
+# <BOND-name>:
+#   enabled: BOOL
+#   mode: 802.3ad / balance-xor
+#   link_mon_mode: mii / arp
+#   link_mon_arp_monitor_ip: IP
+#   mtu: INT
+#   interfaces:
+#     - IFACE-NAME
+#     - IFACE-NAME
+managed_bonds: {}
 
-managed_vlans:
-  10:
-    enabled: false
-    name: VLAN10
-    interface: bond2
-    #network: 192.168.88.0
-    #netmask: 24
-    #ip_address: 192.168.88.1
-    #dns: 192.168.88.38
-    #dhcp_pool: 192.168.88.10-192.168.88.250
-  20:
-    enabled: true
-    untagged_interfaces:
-      - ether6
-    #network: 192.168.89.0
-    #netmask: 24
-    #ip_address: 192.168.89.1
-    #dns: 192.168.88.38
-    #dhcp_pool: 192.168.89.10-192.168.89.250
-    #leasetime: 1d
-  30:
-    enabled: false
-    tagged_interfaces:
-      - ether5
-      - ether6
-  40:
-    enabled: false
-    tagged_interfaces:
-      - ether5
-      - ether6
-    network: 192.168.90.0
-    ip_address: 192.168.90.1
-    netmask: 24
-  50:
-    enabled: false
-    interface: bond1
+# definition:
+# <VLAN-ID>:
+#   enabled: BOOL
+#   name: STRING
+#   interface: IFACE-NAME  # for single interfaces, bonds etc
+#   untagged_interfaces:   # for bridged interfaces, list bridge members
+#     - IFACE-NAME
+#   tagged_interfaces:     # for bridged interfaces, list bridge members
+#     - IFACE-NAME
+managed_vlans: {}
 
 ##########################
-# do not add slave ports for a bond to interface list , but only the bond interface
-managed_interface_lists:
-  - name: LAN
-    enabled: true
-    comment: "Contains all lan interfaces"
-    interfaces:
-      - bond-1
-      - bond-2
-  - name: WAN
-    enabled: false
-    comment: "Contains all wan interfaces"
-    interfaces:
-      - ether5
+# notes:
+# - do not add slave ports for a bond to interface list , but only the bond interface
+# definition:
+# - name: STRING
+#   enabled: BOOL
+#   comment: STRING
+#   interfaces:
+#     - IFACE-NAME
+#     - IFACE-NAME
+managed_interface_lists: []
 
 ##########################
+## wireless definitions
+## todo: double check and refactor
+wireless_profile:
+  default:
+    default_profile: true
+    auth_type: wpa2-psk
+    password: hottentottententoonstelling
+  extra_profile:
+    default_profile: false
+    auth_type: wpa2-psk
+    password: abracadabrakofschiptitanic
 
+wireless_interface:
+  wlan1:
+    default_interface: true
+    band: 2ghz-b/g/n
+    channel_width: 20/40mhz-Ce
+    frequency: 2442
+    mode: ap-bridge
+    ssid: blabla
+    vlan: 20
+    vlan_mode: use-tag
+    security_profile: default
+  extra_ssid:
+    default_interface: false
+    ssid: borkborkbork
+    master_interface: wlan1
+    security_profile: extra_profile
+
+##########################
 
 # backup script settings
 backup_script_enabled: false
-backup_password: test1
-backup_src_ip: 127.0.0.1
+backup_password:
+backup_src_ip:
 
 # upgrade script settings
 upgrade_script_enabled: false
 
 # system logging
-set_system_logging: true
+set_system_logging: false
 set_system_logging_remote: false
 system_logging_remote_ip: 192.168.88.101
 system_logging_remote_ip_port: 514
