@@ -1,6 +1,8 @@
 
-skip_list: []
- 
-warn_list:  # or 'skip_list' to silence them completely                                                                                                                                                                                                                                  │
-  - '106'  # Role name {} does not match ``^[a-z][a-z0-9_]+$`` pattern                                                                                                                                                                                                                   │
+skip_list:
   - '204'  # Lines should be no longer than 160 chars                                                                                                                                                                                                                                    │
+  - '106'  # Role name {} does not match ``^[a-z][a-z0-9_]+$`` pattern                                                                                                                                                                                                                   │
+
+warn_list:  # or 'skip_list' to silence them completely                                                                                                                                                                                                                                  │
+  - '206'  # Variables should have spaces before and after: {{ var_name }}
+
