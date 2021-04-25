@@ -1,0 +1,73 @@
+---
+
+- name: set logging remote
+  routeros_command:
+    commands:
+      - >-2
+        /system logging action set
+        number=[ find name=remote ]
+        target="remote"
+        remote={{ system_logging_remote_ip }}
+        remote-port={{ system_logging_remote_ip_port }}
+        src-address=0.0.0.0
+        bsd-syslog=yes
+        syslog-time-format=bsd-syslog
+        syslog-facility=daemon
+        syslog-severity=alert
+  when:
+    - set_system_logging_remote|default(False)|bool
+
+#- debug:
+#    msg: "{{ item }}"
+#  when:
+#    - item.1.state == "present"
+#  with_subelements:
+#    - "{{ system_logging }}"
+#    - topics
+#- fail:
+#    msg: "haard"
+
+- name: check logging
+  loop: "{{ system_logging }}"
+  routeros_command:
+    commands:
+      - /system logging print where action={{ item.action }}
+  register: check
+
+- debug:
+    #msg: "{{ (check.stdout_lines|flatten(levels=1))[2:] }}"
+    msg: "{{ check.results | list }}"
+
+- fail:
+    msg: "haard"
+
+- name: set logging
+  tags:
+    - never
+  routeros_command:
+    commands:
+      - >-2
+        /system logging add
+        action={{ item.0.action }}
+        topics={{ item.1.name }}
+  with_subelements:
+    - "{{ system_logging }}"
+    - topics
+  when:
+    - item.1.state|default('present') == "present"
+    - set_system_logging|default(False)|bool
+
+- name: delete logging
+  tags:
+    - never
+  routeros_command:
+    commands:
+      - >-2
+        /system logging remove
+        numbers=[/system logging find action="{{ item.0.action }}" and topics="{{ item.1.name }}"]
+  with_subelements:
+    - "{{ system_logging }}"
+    - topics
+  when:
+    - item.1.state|default('present') == "absent"
+    - set_system_logging|default(False)|bool

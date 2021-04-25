@@ -1,0 +1,106 @@
+---
+
+- name: handle backup script deploy
+  block:
+    - name: check for backup script
+      routeros_command:
+        commands:
+          - /system scheduler print where name="{{ backup_script_name }}"
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+      register: check
+
+    - name: evaluate script check
+      set_fact:
+        backup_script_exists: "{{ (check.stdout_lines|flatten(levels=1))[2:]|length > 0 }}"
+
+    - name: remove backup script
+      routeros_command:
+        commands:
+          - "/system scheduler remove {{ backup_script_name }}"
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+      when:
+        - backup_script_exists|bool
+        - not backup_script_enabled|bool
+
+    - name: deploy backup script
+      when:
+        - not backup_script_exists|bool
+        - backup_script_enabled|bool
+      block:
+        - name: assert requirements
+          assert:
+            that:
+              - backup_password is defined
+              - backup_password|length > 0
+              - backup_src_ip is defined
+              - backup_src_ip|length > 0
+
+        - name: create backup script
+          routeros_command:
+            commands:
+              - >-2
+                /system scheduler add
+                interval=1w
+                name="{{ backup_script_name }}"
+                on-event="{{ backup_script_event }}"
+                policy="ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon"
+                start-date="jun/11/2018"
+                start-time="00:00:00"
+              - >-2
+                /user group add
+                name=ftp
+                policy="ftp,read,sensitive,!local,!telnet,!ssh,!reboot,!write,!policy,!test,!winbox,!password,!web,!sniff,!api,!romon,!dude,!tikapp"
+              - /user add address="{{ backup_src_ip }}" group=ftp name=ftp
+              - /user set ftp password="{{ backup_password }}"
+            wait_for:
+              - result[0] not contains "error"
+              - result[0] not contains "expected end of command line"
+              - result[1] not contains "error"
+              - result[1] not contains "expected end of command line"
+              - result[2] not contains "error"
+              - result[2] not contains "expected end of command line"
+              - result[3] not contains "error"
+              - result[3] not contains "expected end of command line"
+
+- name: handle upgrade script deploy
+  block:
+    - name: check for upgrade script
+      routeros_command:
+        commands:
+          - /system scheduler print where name="{{ upgrade_script_name }}"
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+      register: check
+
+    - name: evaluate script check
+      set_fact:
+        upgrade_script_exists: "{{ (check.stdout_lines|flatten(levels=1))[2:]|length > 0 }}"
+
+    - name: remove auto upgrade script
+      routeros_command:
+        commands:
+          - "/system scheduler remove {{ upgrade_script_name }}"
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+      when:
+        - upgrade_script_exists|bool
+        - not upgrade_script_enabled|bool
+
+    - name: deploy auto upgrade script
+      routeros_command:
+        commands:
+          - /system scheduler add interval=1w name="{{ upgrade_script_name }}" on-event="{{ upgrade_script_event }}" policy="ftp,reboot,read,write,policy,test,password,sniff,sensitive,romon" start-date=jun/12/2018 start-time=00:00:00
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+      when:
+        - not upgrade_script_exists|bool
+        - upgrade_script_enabled|bool
+
+...

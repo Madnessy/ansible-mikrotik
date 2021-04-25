@@ -1,0 +1,29 @@
+---
+- name: set ntp client (dns based)
+  routeros_command:
+    commands:
+      - >-2
+        /system ntp client set
+        enabled=yes
+        server-dns-names={{ ntp_client_dnsnames }}
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+  when:
+    - set_ntp_client_dns|default(False)|bool
+
+- name: set ntp client (ip based)
+  routeros_command:
+    commands:
+      - >-2
+        /system ntp client set
+        enabled=yes
+        primary-ntp={{ ntp_client_ip1 }}
+        secondary-ntp={{ ntp_client_ip2 }}
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+  when:
+    - set_ntp_client_ip|default(False)|bool
+
+...
