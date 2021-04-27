@@ -60,6 +60,7 @@
       when:
         - not command_output.skipped|default(False)
         - command_stdout|length > 0
+        - "'failure:' in command_stdout"
         - "not 'failure: already have interface with such name' in command_stdout"
       fail:
         msg: "{{ command_stdout }}"
@@ -148,6 +149,7 @@
       when:
         - not command_output.skipped|default(False)
         - command_stdout|length > 0
+        - "'failure:' in command_stdout"
         - "not 'failure: already have interface with such name' in command_stdout"
       fail:
         msg: "{{ command_stdout }}"
