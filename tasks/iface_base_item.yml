@@ -80,13 +80,31 @@
           - iface.network is defined
           - iface.netmask is defined
 
+    - name: "{{ iface_name }}: set dhcp pool"
+      when:
+        - iface.enabled
+      vars:
+        dhcp_pool_name: "dhcp-pool-{{ iface_name }}"
+      routeros_command:
+        commands:
+          - "/ip pool add name={{ dhcp_pool_name }} ranges={{ iface.dhcp_pool }}"
+          - "/ip pool set {{ dhcp_pool_name }} ranges={{ iface.dhcp_pool }}"
+        wait_for:
+          - result[0] not contains "error"
+          - result[0] not contains "expected end of command line"
+          - result[1] not contains "error"
+          - result[1] not contains "expected end of command line"
+
     - name: "{{ iface_name }}: set dhcp server"
       when:
         - iface.enabled
+      vars:
+        dhcp_server_name: "dhcp-server-{{ iface_name }}"
+        dhcp_pool_name: "dhcp-pool-{{ iface_name }}"
       routeros_command:
         commands:
-          - "/ip pool add name=dhcp-pool-{{ iface_name }} ranges={{ iface.dhcp_pool }}"
-          - "/ip dhcp-server add address-pool=dhcp-pool-{{ iface_name }} disabled=no interface={{ iface_name }} name=dhcp-server-{{ iface_name }} lease-time={{ iface.leasetime|default('1d') }}"
+          - "/ip dhcp-server add name={{ dhcp_server_name }} interface={{ iface_name }}"
+          - "/ip dhcp-server set {{ dhcp_server_name }} address-pool=dhcp-pool-{{ iface_name }} disabled=no lease-time={{ iface.leasetime|default('1d') }}"
           - "/ip dhcp-server network add comment=dhcp-server-{{ iface_name }}-basenet address={{ iface.network }}/{{ iface.netmask }} dns-server={{ iface.dns|default(iface.ip_address) }} gateway={{ iface.ip_address }} netmask={{ iface.netmask }}"
         wait_for:
           - result[0] not contains "error"

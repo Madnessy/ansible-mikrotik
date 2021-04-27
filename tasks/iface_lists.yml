@@ -22,7 +22,7 @@
     - "{{ managed_interface_lists }}"
     - interfaces
   when:
-    - item.enabled|default(False)
+    - item.0.enabled|default(False)
 
 - name: remove interface lists
   routeros_command:
@@ -35,6 +35,6 @@
     - "{{ managed_interface_lists }}"
     - interfaces
   when:
-    - not item.enabled|default(False)
+    - not item.0.enabled|default(False)
 
 ...
