@@ -56,12 +56,13 @@
         label: "VLAN item:{{ item.key }}"
       vars:
         command_output: "{{ output_collection.results | selectattr('item.key', 'equalto', item.key) | first }}"
+        command_stdout: "{{ command_output.stdout|join('') }}"
       when:
-        - command_output.skipped|default(False) == False
-        - command_output.stdout|join("")|length > 0
-        - 'not ("failure: already have interface with such name" in command_output.stdout)'
+        - not command_output.skipped|default(False)
+        - command_stdout|length > 0
+        - "not 'failure: already have interface with such name' in command_stdout"
       fail:
-        msg: "{{ command_output.stdout_lines|flatten(levels=1) }}"
+        msg: "{{ command_stdout }}"
 
 - name: handle bridged VLAN
   when:
@@ -143,12 +144,13 @@
         label: "VLAN item:{{ item.key }}"
       vars:
         command_output: "{{ output_collection.results | selectattr('item.key', 'equalto', item.key) | first }}"
+        command_stdout: "{{ command_output.stdout|join('') }}"
       when:
-        - "'skipped' in command_output and command_output.skipped|default(False) == False"
-        - command_output.stdout|join("")|length > 0
-        - 'not ("failure: already have interface with such name" in command_output.stdout)'
+        - not command_output.skipped|default(False)
+        - command_stdout|length > 0
+        - "not 'failure: already have interface with such name' in command_stdout"
       fail:
-        msg: "{{ command_output.stdout_lines|flatten(levels=1) }}"
+        msg: "{{ command_stdout }}"
 
     - name: bridged interface - create bridge vlans (with tagged and untagged)
       routeros_command:
