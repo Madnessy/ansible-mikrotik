@@ -79,7 +79,7 @@ managed_vlans:
       - ether5
       - ether6
   VLAN40:
-    enabled: false
+    enabled: true
     vid: 40
     tagged_interfaces:
       - ether5
