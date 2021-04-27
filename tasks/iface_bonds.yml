@@ -21,6 +21,7 @@
   loop_control:
     label: "{{ item.key }}"
   assert:
+    quiet: true
     that:
       - item.value.mode|default('none') is defined
       - item.value.mode in iface_bond_modes
@@ -32,6 +33,7 @@
   loop_control:
     label: "{{ item.key }}"
   assert:
+    quiet: true
     that:
       - item.value.interfaces|default(None) is defined
       - item.value.interfaces is iterable
@@ -81,6 +83,17 @@
   routeros_command:
     commands:
       - "/interface bonding set {{ item.key }} link-monitoring={{ item.value.link_mon_mode }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+
+- name: set bond misc settings
+  with_dict: "{{ managed_bonds }}"
+  when:
+    - item.value.enabled|default(False)
+  routeros_command:
+    commands:
+      - "/interface bonding set {{ item.key }} comment=\"{{ item.value.comment|default('') }}\""
     wait_for:
       - result[0] not contains "error"
       - result[0] not contains "expected end of command line"
