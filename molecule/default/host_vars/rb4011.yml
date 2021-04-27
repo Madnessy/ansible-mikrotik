@@ -3,7 +3,7 @@ manage_ethers: true
 manage_bonds: true
 manage_vlans: true
 manage_wireless: false
-manage_iface_lists: false
+manage_iface_lists: true
 
 managed_ethers:
   ether1:
@@ -51,40 +51,45 @@ managed_bonds:
       - ether4
 
 managed_vlans:
-  10:
-    enabled: false
-    name: VLAN10
-    interface: bond2
+  VLAN10:
+    enabled: false  # can't test single interfaces because MTU can't be set inside VM
+    vid: 10
+    interface: bond1
     #network: 192.168.88.0
     #netmask: 24
     #ip_address: 192.168.88.1
     #dns: 192.168.88.38
     #dhcp_pool: 192.168.88.10-192.168.88.250
-  20:
+  VLAN20:
     enabled: true
+    vid: 20
+    pvid: 2
     untagged_interfaces:
       - ether6
-    #network: 192.168.89.0
-    #netmask: 24
-    #ip_address: 192.168.89.1
+    network: 192.168.89.252
+    netmask: 30
+    ip_address: 192.168.89.253
     #dns: 192.168.88.38
-    #dhcp_pool: 192.168.89.10-192.168.89.250
-    #leasetime: 1d
-  30:
+    dhcp_pool: 192.168.89.254-192.168.89.254
+    leasetime: 1d
+  VLAN30:
     enabled: false
+    vid: 30
     tagged_interfaces:
       - ether5
       - ether6
-  40:
+  VLAN40:
     enabled: false
+    vid: 40
     tagged_interfaces:
       - ether5
       - ether6
     network: 192.168.90.0
     ip_address: 192.168.90.1
     netmask: 24
-  50:
+  VLAN50:
     enabled: false
+    vid: 50
     interface: bond1
 
 managed_interface_lists:
@@ -93,7 +98,7 @@ managed_interface_lists:
     comment: "Contains all lan interfaces"
     interfaces:
       - bond-1
-      - bond-2
+      #- bond-2
   - name: WAN
     enabled: false
     comment: "Contains all wan interfaces"
