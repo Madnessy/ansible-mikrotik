@@ -74,6 +74,7 @@
   block:
     - name: "{{ iface_name }}: check dhcp server requirements"
       assert:
+        quiet: true
         that:
           - iface.ip_address is defined
           - iface.network is defined

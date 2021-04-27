@@ -1,5 +1,13 @@
 ---
 
+- name: assert vlan definition requirements
+  assert:
+    quiet: true
+    that:
+      - managed_vlans|dict2items|rejectattr('value', 'contains', 'vid')|length == 0
+      - managed_vlans|dict2items|rejectattr('value', 'contains', 'enabled')|length == 0
+    fail_msg: "Mandatory attributes missing in VLAN items"
+
 - name: filter enabled vlans
   set_fact:
     internal_enabled_managed_vlans: "{{ managed_vlans|dict2items|selectattr('value.enabled') }}"
@@ -33,24 +41,25 @@
       loop_control:
         label: "VLAN item:{{ item.key }}"
       vars:
-        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
       routeros_command:
         commands:
-          - "/interface vlan add interface={{ item.value.interface }} name={{ vlan_name }} vlan-id={{ item.key }}"
+          - "/interface vlan add interface={{ item.value.interface }} name={{ vlan_name }} vlan-id={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
       register: output_collection
 
-    - name: single interface - evaluate commands
+    - name: single interface - check output log
       loop: "{{ internal_enabled_simple_vlans }}"
       loop_control:
         label: "VLAN item:{{ item.key }}"
       vars:
         command_output: "{{ output_collection.results | selectattr('item.key', 'equalto', item.key) | first }}"
       when:
-        - not command_output.skipped|default(False)
-        - command_output.stdout|length > 0
+        - command_output.skipped|default(False) == False
+        - command_output.stdout|join("")|length > 0
+        - 'not ("failure: already have interface with such name" in command_output.stdout)'
       fail:
         msg: "{{ command_output.stdout_lines|flatten(levels=1) }}"
 
@@ -81,7 +90,7 @@
     - name: enable firewall for vlans
       routeros_command:
         commands:
-          - /interface bridge settings set use-ip-firewall=yes use-ip-firewall-for-vlan=yes
+          - "/interface bridge settings set use-ip-firewall=yes use-ip-firewall-for-vlan=yes"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -90,7 +99,7 @@
     - name: ensure vlan master iface
       routeros_command:
         commands:
-          - /interface bridge add name="{{ vlif }}"
+          - "/interface bridge add name={{ vlif }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -98,7 +107,7 @@
     - name: set vlan filtering on bridge
       routeros_command:
         commands:
-          - /interface bridge set ingress-filtering=yes vlan-filtering=yes numbers=[ find name="{{ vlif }}" ]
+          - "/interface bridge set ingress-filtering=yes vlan-filtering=yes numbers=[ find name={{ vlif }} ]"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -106,7 +115,7 @@
     - name: set pvid on untagged port
       routeros_command:
         commands:
-          - "/interface bridge port set numbers=[find interface={{ item.1 }} ] pvid={{ item.0.id|default(default_untagged_pvid)|int }}"
+          - "/interface bridge port set numbers=[find interface={{ item.1 }} ] pvid={{ item.0.pvid|default(default_untagged_pvid)|int }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -119,32 +128,32 @@
       loop_control:
         label: "VLAN item:{{ item.key }}"
       vars:
-        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
       routeros_command:
         commands:
-          - "/interface vlan add interface={{ vlif }} name={{ vlan_name }} vlan-id={{ item.key }}"
+          - "/interface vlan add interface={{ vlif }} name={{ vlan_name }} vlan-id={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
       register: output_collection
 
-    - name: bridged interface - evaluate commands
+    - name: bridged interface - check output log
       loop: "{{ internal_enabled_bridge_vlans }}"
       loop_control:
         label: "VLAN item:{{ item.key }}"
       vars:
         command_output: "{{ output_collection.results | selectattr('item.key', 'equalto', item.key) | first }}"
       when:
-        - not command_output.skipped|default(False)
-        - command_output.stdout|join(' ')|length > 0
-        - 'not "failure: already have interface with such name" in command_output.stdout'
+        - "'skipped' in command_output and command_output.skipped|default(False) == False"
+        - command_output.stdout|join("")|length > 0
+        - 'not ("failure: already have interface with such name" in command_output.stdout)'
       fail:
         msg: "{{ command_output.stdout_lines|flatten(levels=1) }}"
 
     - name: bridged interface - create bridge vlans (with tagged and untagged)
       routeros_command:
         commands:
-          - "/interface bridge vlan add bridge={{ vlif }} tagged={{ item.value.tagged_interfaces| join(',') }} untagged={{ item.value.untagged_interfaces| join(',') }} vlan-ids={{ item.key }}"
+          - "/interface bridge vlan add bridge={{ vlif }} tagged={{ item.value.tagged_interfaces| join(',') }} untagged={{ item.value.untagged_interfaces| join(',') }} vlan-ids={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -156,7 +165,7 @@
     - name: bridged interface - create bridge vlans (with tagged )
       routeros_command:
         commands:
-          - "/interface bridge vlan add bridge={{ vlif }} tagged={{ item.value.tagged_interfaces| join(',') }} vlan-ids={{ item.key }}"
+          - "/interface bridge vlan add bridge={{ vlif }} tagged={{ item.value.tagged_interfaces| join(',') }} vlan-ids={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -168,7 +177,7 @@
     - name: bridged interface - create bridge vlans (with untagged )
       routeros_command:
         commands:
-          - "/interface bridge vlan add bridge={{ vlif }} untagged={{ item.value.untagged_interfaces| join(',') }} vlan-ids={{ item.key }}"
+          - "/interface bridge vlan add bridge={{ vlif }} untagged={{ item.value.untagged_interfaces| join(',') }} vlan-ids={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -179,10 +188,10 @@
 
     - name: bridged interface - ensure inter-vlan traffic
       vars:
-        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
       routeros_command:
         commands:
-          - "/interface bridge port add bridge={{ vlif }} interface={{ vlan_name }} pvid={{ item.key }}"
+          - "/interface bridge port add bridge={{ vlif }} interface={{ vlan_name }} pvid={{ item.value.vid }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -193,7 +202,7 @@
   loop_control:
     loop_var: item
   vars:
-    iface_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+    iface_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
     iface: "{{ item.value }}"
   include: iface_base_item.yml
 
@@ -208,12 +217,12 @@
         - item.value.interface is not defined
         - not item.value.enabled
       vars:
-        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
       routeros_command:
         commands:
-          - /interface bridge port remove numbers=[find bridge="{{ vlif }}" interface="{{ vlan_name }}"]
-          - /interface bridge vlan remove [find vlan-ids="{{ item.key }}"]
-          - /interface vlan remove "{{ vlan_name }}"
+          - "/interface bridge port remove numbers=[find bridge={{ vlif }} interface={{ vlan_name }}]"
+          - "/interface bridge vlan remove [find vlan-ids={{ item.value.vid }}]"
+          - "/interface vlan remove {{ vlan_name }}"
         wait_for:
           - result[0] not contains "error"
           - result[0] not contains "expected end of command line"
@@ -229,7 +238,7 @@
         - item.value.interface is defined
         - not item.value.enabled
       vars:
-        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.key))|mandatory }}"
+        vlan_name: "{{ item.value.name|default('VLAN%d'|format(item.value.vid))|mandatory }}"
       routeros_command:
         commands:
           - /interface vlan remove "{{ vlan_name }}"
