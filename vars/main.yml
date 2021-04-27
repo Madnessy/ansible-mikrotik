@@ -20,4 +20,4 @@ iface_bond_modes:
   - broadcast
 
 default_untagged_pvid: 1
-default_vlif_master: bridge
+default_vlif_master: vlbridge0
