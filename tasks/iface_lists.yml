@@ -1,5 +1,11 @@
 ---
 
+- name: publish interface lists
+  set_fact:
+    internal_nic_lists: "{{ managed_interface_lists | select('contains', 'interfaces') }}"
+    internal_include_lists: "{{ managed_interface_lists | select('contains', 'include') }}"
+    internal_exclude_lists: "{{ managed_interface_lists | select('contains', 'exclude') }}"
+
 - name: create interfaces lists
   routeros_command:
     commands:
@@ -11,7 +17,7 @@
     - item.enabled|default(False)
   with_items: "{{ managed_interface_lists }}"
 
-- name: add interface to interface lists
+- name: add interfaces to interface lists
   routeros_command:
     commands:
       - "/interface list member add interface={{ item.1 }} list={{ item.0.name }}"
@@ -19,10 +25,32 @@
       - result[0] not contains "error"
       - result[0] not contains "expected end of command line"
   with_subelements:
-    - "{{ managed_interface_lists }}"
+    - "{{ internal_nic_lists }}"
     - interfaces
   when:
     - item.0.enabled|default(False)
+
+- name: include lists into interface lists
+  routeros_command:
+    commands:
+      - "/interface list set {{ item.name }} include={{ item.include|join(',') }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+  when:
+    - item.enabled|default(False)
+  with_items: "{{ internal_include_lists }}"
+
+- name: exclude lists into interface lists
+  routeros_command:
+    commands:
+      - "/interface list set {{ item.name }} exclude={{ item.exclude|join(',') }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+  when:
+    - item.enabled|default(False)
+  with_items: "{{ internal_exclude_lists }}"
 
 - name: remove interface lists
   routeros_command:
@@ -31,10 +59,9 @@
     wait_for:
       - result[0] not contains "error"
       - result[0] not contains "expected end of command line"
-  with_subelements:
+  with_items:
     - "{{ managed_interface_lists }}"
-    - interfaces
   when:
-    - not item.0.enabled|default(False)
+    - not item.enabled|default(False)
 
 ...
