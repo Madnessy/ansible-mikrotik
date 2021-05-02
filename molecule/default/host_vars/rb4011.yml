@@ -172,3 +172,48 @@ system_logging:
       state: absent
     - name: write
       state: absent
+
+disabled_tools_mac_winbox: true
+disabled_tools_mac_ping: true
+disable_mac_telnet: true
+disable_bandwith_server: true
+disable_neighbor_discovery: true
+disable_packages:
+  - ipv6
+disable_caching_proxy: true
+disable_socks_proxy: true
+disable_upnp: true
+disable_cloud: true
+ssh_strong_crypto: true
+disable_dns_cache: true
+disable_lcd: true
+
+certificates:
+  - name: root-cert
+    enabled: true
+    common-name: root-cert
+    days-valid: 3650
+    key-usage: key-cert-sign,crl-sign
+  - name: https-cert
+    enabled: true
+    common-name: router.lan
+    subject-alt-name: IP:192.168.1.1
+    days-valid: 3650
+    ca: root-cert
+
+services:
+  www-ssl:
+    disabled: "no"
+    certificate: https-cert
+  telnet:
+    disabled: "yes"
+  api:
+    disabled: "yes"
+  api-ssl:
+    disabled: "yes"
+  ftp:
+    disabled: "yes"
+  winbox:
+    disabled: "yes"
+
+

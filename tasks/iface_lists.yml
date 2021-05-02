@@ -55,7 +55,7 @@
 - name: remove interface lists
   routeros_command:
     commands:
-      - "/interface list remove {{ item.0.name }}"
+      - "/interface list remove {{ item.name }}"
     wait_for:
       - result[0] not contains "error"
       - result[0] not contains "expected end of command line"

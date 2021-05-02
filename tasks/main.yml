@@ -11,8 +11,9 @@
 - name: Loading Interface management tasks
   include: interfaces.yml
 
-#- include: hardening.yml
-#
+- name: Apply system hardening rules
+  include: hardening.yml
+
 ##- include: vpn.yml
 ##  when: manage_vpn
 #
@@ -26,3 +27,4 @@
 #  loop_control:
 #    loop_var: firewall_policies_item
 #  when: manage_firewall
+

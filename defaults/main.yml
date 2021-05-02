@@ -161,3 +161,36 @@ system_logging:
       state: absent
     - name: write
       state: absent
+
+
+### hardening flags ####
+#
+disabled_tools_mac_winbox: false
+disabled_tools_mac_ping: false
+disable_mac_telnet: false
+disable_bandwith_server: false
+disable_neighbor_discovery: false
+disable_packages:
+  - ipv6
+disable_caching_proxy: false
+disable_socks_proxy: false
+disable_upnp: false
+disable_cloud: false
+ssh_strong_crypto: false
+disable_dns_cache: false
+disable_lcd: false
+
+services:
+  www-ssl:
+    disabled: "yes"
+  telnet:
+    disabled: "yes"
+  api:
+    disabled: "yes"
+  api-ssl:
+    disabled: "yes"
+  ftp:
+    disabled: "yes"
+  winbox:
+    disabled: "yes"
+

@@ -2,14 +2,13 @@
 - name: disable services
   routeros_command:
     commands: "/ip service disable {{ item }}"
-  with_items:
-    - "{{ disabled_services }}"
+  with_items: "{{ disabled_services|default([]) }}"
 
 - name: enabled services without ip restriction
   routeros_command:
     commands: "/ip service enable {{ item }}"
   with_items:
-    - "{{ enabled_services }}"
+    - "{{ enabled_services|default([]) }}"
   when: management_subnet is not defined
 
 - name: enabled services with ip restriction
@@ -18,70 +17,71 @@
       - "/ip service enable {{ item }}"
       - "/ip service set {{ item }} address={{ management_subnet }}"
   with_items:
-    - "{{ enabled_services }}"
+    - "{{ enabled_services|default([]) }}"
   when: management_subnet is defined
 
 - name: disabled tools
   routeros_command:
     commands: "/tool mac-server mac-winbox set allowed-interface-list=none"
-  when: disabled_tools_mac_winbox
+  when: disabled_tools_mac_winbox|default(False)
 
 - name: disabled tools
   routeros_command:
     commands: "/tool mac-server ping set enabled=no"
-  when: disabled_tools_mac_ping
+  when: disabled_tools_mac_ping|default(False)
 
 - name: disabled tools mac-server
   routeros_command:
     commands: /tool mac-server set allowed-interface-list=none
-  when: disable_mac_telnet
+  when: disable_mac_telnet|default(False)
 
 - name: disabled tools bandwidth-server
   routeros_command:
     commands: /tool bandwidth-server set enabled=no
-  when: disable_bandwith_server
+  when: disable_bandwith_server|default(False)
 
 - name: disable neighbor discovery
   routeros_command:
     commands: /ip neighbor discovery-settings set discover-interface-list=none
-  when: disable_neighbor_discovery
+  when: disable_neighbor_discovery|default(False)
 
 - name: disable packages
   routeros_command:
     commands: "/system package disable {{ item }}"
-  with_items: "{{ disabled_packages }}"
+  with_items: "{{ disabled_packages|default([]) }}"
 
 - name: disable dns caching
   routeros_command:
     commands: /ip dns set allow-remote-requests=no
-  when: disable_dns_cache
+  when: disable_dns_cache|default(False)
 
 - name: disable caching proxy
   routeros_command:
     commands: /ip proxy set enabled=no
-  when: disable_caching_proxy
+  when: disable_caching_proxy|default(False)
 
 - name: disable caching proxy
   routeros_command:
     commands: /ip socks set enabled=no
-  when: disable_socks_proxy
+  when: disable_socks_proxy|default(False)
 
 - name: disable upnp
   routeros_command:
     commands: /ip upnp set enabled=no
-  when: disable_upnp
+  when: disable_upnp|default(False)
 
 - name: disable lcd
   routeros_command:
     commands: /lcd set enabled=no
-  when: disable_lcd
+  when: disable_lcd|default(False)
 
 - name: disable cloud
   routeros_command:
     commands: /ip cloud set ddns-enabled=no update-time=no
-  when: disable_cloud
+  when: disable_cloud|default(False)
 
 - name: change ssh crypto to stronger
   routeros_command:
     commands: /ip ssh set allow-none-crypto=no strong-crypto=yes
-  when: ssh_strong_crypto
+  when: ssh_strong_crypto|default(False)
+

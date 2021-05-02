@@ -26,4 +26,52 @@
   when:
     - set_ntp_client_ip|default(False)|bool
 
+- name: manage enabled certificates
+  with_items: "{{ certificates|default([]) }}"
+  vars:
+    cert_opts: "{{ item.keys()|zip(item.values())|reject('contains','enabled')|reject('contains','name')|reject('contains','ca')|map('join','=')|list|join(' ') }}"
+  when: item.enabled
+  routeros_command:
+    commands:
+      - "/certificate add name={{ item.name }} {{ cert_opts }}"
+      - "/certificate set {{ item.name }} {{ cert_opts }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+      - result[1] not contains "error"
+      - result[1] not contains "expected end of command line"
+
+- name: sign enabled certificates
+  with_items: "{{ certificates|default([]) }}"
+  vars:
+    sign_opts: "{{ ('ca' in item)|ternary('ca=%s'|format(item.get('ca')), '', omit) }}"
+  when: item.enabled
+  routeros_command:
+    commands:
+      - "/certificate sign {{ sign_opts }} {{ item.name }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+
+- name: manage disabled certificates
+  with_items: "{{ certificates|default([]) }}"
+  when: not item.enabled
+  routeros_command:
+    commands:
+      - "/certificate remove {{ item.name }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+
+- name: manage ip services
+  with_dict: "{{ services }}"
+  vars:
+    service_opts: "{{ item.value.keys()|zip(item.value.values())|map('join','=')|list|join(' ') }}"
+  routeros_command:
+    commands:
+      - "/ip service set {{ item.key }} {{ service_opts }}"
+    wait_for:
+      - result[0] not contains "error"
+      - result[0] not contains "expected end of command line"
+
 ...
