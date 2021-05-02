@@ -71,6 +71,10 @@
   when:
     - not iface.dhcp_client|default(False)
     - iface.dhcp_pool is defined
+  vars:
+    dhcp_server_name: "dhcp-server-{{ iface_name }}"
+    dhcp_pool_name: "dhcp-pool-{{ iface_name }}"
+    dhcp_net_name: "dhcp-server-{{ iface_name }}-basenet"
   block:
     - name: "{{ iface_name }}: check dhcp server requirements"
       assert:
@@ -83,8 +87,6 @@
     - name: "{{ iface_name }}: set dhcp pool"
       when:
         - iface.enabled
-      vars:
-        dhcp_pool_name: "dhcp-pool-{{ iface_name }}"
       routeros_command:
         commands:
           - "/ip pool add name={{ dhcp_pool_name }} ranges={{ iface.dhcp_pool }}"
@@ -98,21 +100,38 @@
     - name: "{{ iface_name }}: set dhcp server"
       when:
         - iface.enabled
-      vars:
-        dhcp_server_name: "dhcp-server-{{ iface_name }}"
-        dhcp_pool_name: "dhcp-pool-{{ iface_name }}"
-      routeros_command:
-        commands:
-          - "/ip dhcp-server add name={{ dhcp_server_name }} interface={{ iface_name }}"
-          - "/ip dhcp-server set {{ dhcp_server_name }} address-pool=dhcp-pool-{{ iface_name }} disabled=no lease-time={{ iface.leasetime|default('1d') }}"
-          - "/ip dhcp-server network add comment=dhcp-server-{{ iface_name }}-basenet address={{ iface.network }}/{{ iface.netmask }} dns-server={{ iface.dns|default(iface.ip_address) }} gateway={{ iface.ip_address }} netmask={{ iface.netmask }}"
-        wait_for:
-          - result[0] not contains "error"
-          - result[0] not contains "expected end of command line"
-          - result[1] not contains "error"
-          - result[1] not contains "expected end of command line"
-          - result[2] not contains "error"
-          - result[2] not contains "expected end of command line"
+      block:
+        - name: "{{ iface_name }}: add dhcp network"
+          routeros_command:
+            commands:
+              - "/ip dhcp-server network add comment={{ dhcp_net_name }}"
+            wait_for:
+              - result[0] not contains "error"
+              - result[0] not contains "expected end of command line"
+
+        - name: "{{ iface_name }}: set dhcp network settings"
+          routeros_command:
+            commands:
+              - "/ip dhcp-server network set numbers=[find comment={{ dhcp_net_name }}] address={{ iface.network }}/{{ iface.netmask }} dns-server={{ iface.dns|default(iface.ip_address) }} gateway={{ iface.ip_address }} netmask={{ iface.netmask }} domain=\"{{ iface.domain|default('') }}\""
+            wait_for:
+              - result[0] not contains "error"
+              - result[0] not contains "expected end of command line"
+
+        - name: "{{ iface_name }}: add dhcp server"
+          routeros_command:
+            commands:
+              - "/ip dhcp-server add name={{ dhcp_server_name }} interface={{ iface_name }}"
+            wait_for:
+              - result[0] not contains "error"
+              - result[0] not contains "expected end of command line"
+
+        - name: "{{ iface_name }}: set dhcp server settings"
+          routeros_command:
+            commands:
+              - "/ip dhcp-server set {{ dhcp_server_name }} address-pool={{ dhcp_pool_name }} disabled=no lease-time={{ iface.leasetime|default('1d') }}"
+            wait_for:
+              - result[0] not contains "error"
+              - result[0] not contains "expected end of command line"
 
     - name: "{{ iface_name }}: clean dhcp server"
       when:
