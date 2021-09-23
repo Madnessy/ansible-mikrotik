@@ -11,7 +11,7 @@ ansible-lint = "==4.3.7"
 
 [packages.ansible]
 extras = [ "lint" ]
-version = "==2.10.3"
+version = "==4.2.0"
 
 [requires]
 python_version = "3"
